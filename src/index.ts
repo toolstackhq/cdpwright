@@ -19,4 +19,6 @@ export const automaton = {
   }
 };
 
+export const chromium = automaton;
+
 export { Browser, Page, Frame, Locator, Logger, LogLevel, AutomationEvents, expect, AssertionError };
