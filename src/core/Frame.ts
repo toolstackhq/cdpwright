@@ -1,0 +1,367 @@
+import { Session } from "../cdp/Session.js";
+import { Logger } from "../logging/Logger.js";
+import { AutomationEvents } from "./Events.js";
+import { waitFor } from "./Waiter.js";
+import { parseSelector } from "./Selectors.js";
+import { serializeShadowDomHelpers } from "./ShadowDom.js";
+import { Locator } from "./Locator.js";
+
+export type FrameSelectorOptions = {
+  pierceShadowDom?: boolean;
+};
+
+export type ClickOptions = FrameSelectorOptions & {
+  timeoutMs?: number;
+};
+
+export type TypeOptions = FrameSelectorOptions & {
+  timeoutMs?: number;
+};
+
+export type QueryResult = {
+  objectId: string;
+  contextId: number;
+};
+
+type ElementBox = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  visible: boolean;
+};
+
+export class Frame {
+  readonly id: string;
+  name?: string;
+  url?: string;
+  parentId?: string;
+  private session: Session;
+  private logger: Logger;
+  private events: AutomationEvents;
+  private contextId?: number;
+  private defaultTimeout = 30_000;
+
+  constructor(id: string, session: Session, logger: Logger, events: AutomationEvents) {
+    this.id = id;
+    this.session = session;
+    this.logger = logger;
+    this.events = events;
+  }
+
+  setExecutionContext(contextId?: number) {
+    this.contextId = contextId;
+  }
+
+  getExecutionContext() {
+    return this.contextId;
+  }
+
+  setMeta(meta: { name?: string; url?: string; parentId?: string }) {
+    this.name = meta.name;
+    this.url = meta.url;
+    this.parentId = meta.parentId;
+  }
+
+  async evaluate<T = unknown>(fnOrString: string | ((...args: any[]) => any), ...args: any[]): Promise<T> {
+    return this.evaluateInContext(fnOrString, args);
+  }
+
+  async query(selector: string, options: FrameSelectorOptions = {}): Promise<QueryResult | null> {
+    return this.querySelectorInternal(selector, options, false);
+  }
+
+  async queryAll(selector: string, options: FrameSelectorOptions = {}): Promise<QueryResult[]> {
+    return this.querySelectorAllInternal(selector, options, false);
+  }
+
+  async queryXPath(selector: string, options: FrameSelectorOptions = {}): Promise<QueryResult | null> {
+    return this.querySelectorInternal(selector, options, true);
+  }
+
+  async queryAllXPath(selector: string, options: FrameSelectorOptions = {}): Promise<QueryResult[]> {
+    return this.querySelectorAllInternal(selector, options, true);
+  }
+
+  locator(selector: string, options: FrameSelectorOptions = {}) {
+    return new Locator(this, selector, options);
+  }
+
+  async click(selector: string, options: ClickOptions = {}) {
+    await this.performClick(selector, options, false);
+  }
+
+  async dblclick(selector: string, options: ClickOptions = {}) {
+    await this.performClick(selector, options, true);
+  }
+
+  async type(selector: string, text: string, options: TypeOptions = {}) {
+    const start = Date.now();
+    this.events.emit("action:start", { name: "type", selector, frameId: this.id });
+    await waitFor(async () => {
+      const box = await this.resolveElementBox(selector, options);
+      if (!box || !box.visible) {
+        return false;
+      }
+      return true;
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `type ${selector}` });
+
+    const helpers = serializeShadowDomHelpers();
+    const focusExpression = `(function() {
+      const querySelectorDeep = ${helpers.querySelectorDeep};
+      const root = document;
+      const selector = ${JSON.stringify(selector)};
+      const el = ${options.pierceShadowDom ? "querySelectorDeep(root, selector)" : "root.querySelector(selector)"};
+      if (!el) {
+        return;
+      }
+      el.focus();
+    })()`;
+    const focusParams: Record<string, unknown> = {
+      expression: focusExpression,
+      returnByValue: true
+    };
+    if (this.contextId) {
+      focusParams.contextId = this.contextId;
+    }
+    await this.session.send("Runtime.evaluate", focusParams);
+
+    await this.session.send("Input.insertText", { text });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "type", selector, frameId: this.id, durationMs: duration });
+    this.logger.debug("Type", selector, `${duration}ms`);
+  }
+
+  async exists(selector: string, options: FrameSelectorOptions = {}) {
+    const handle = await this.query(selector, options);
+    if (handle) {
+      await this.releaseObject(handle.objectId);
+      return true;
+    }
+    return false;
+  }
+
+  async isVisible(selector: string, options: FrameSelectorOptions = {}) {
+    const box = await this.resolveElementBox(selector, options);
+    return Boolean(box && box.visible);
+  }
+
+  async text(selector: string, options: FrameSelectorOptions = {}) {
+    const helpers = serializeShadowDomHelpers();
+    const expression = `(function() {
+      const querySelectorDeep = ${helpers.querySelectorDeep};
+      const root = document;
+      const selector = ${JSON.stringify(selector)};
+      const el = ${options.pierceShadowDom ? "querySelectorDeep(root, selector)" : "root.querySelector(selector)"};
+      return el ? el.textContent || \"\" : null;
+    })()`;
+
+    const params: Record<string, unknown> = {
+      expression,
+      returnByValue: true
+    };
+    if (this.contextId) {
+      params.contextId = this.contextId;
+    }
+    const result = await this.session.send<{ result: { value?: string | null } }>("Runtime.evaluate", params);
+    return result.result.value ?? null;
+  }
+
+  private async performClick(selector: string, options: ClickOptions, isDouble: boolean) {
+    const start = Date.now();
+    const actionName = isDouble ? "dblclick" : "click";
+    this.events.emit("action:start", { name: actionName, selector, frameId: this.id });
+    const box = await waitFor(async () => {
+      const result = await this.resolveElementBox(selector, options);
+      if (!result || !result.visible) {
+        return null;
+      }
+      return result;
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `${actionName} ${selector}` });
+
+    const centerX = box.x + box.width / 2;
+    const centerY = box.y + box.height / 2;
+    const clickCount = isDouble ? 2 : 1;
+
+    await this.session.send("Input.dispatchMouseEvent", { type: "mousePressed", x: centerX, y: centerY, button: "left", clickCount });
+    await this.session.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: centerX, y: centerY, button: "left", clickCount });
+
+    if (isDouble) {
+      await this.session.send("Input.dispatchMouseEvent", { type: "mousePressed", x: centerX, y: centerY, button: "left", clickCount });
+      await this.session.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: centerX, y: centerY, button: "left", clickCount });
+    }
+
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: actionName, selector, frameId: this.id, durationMs: duration });
+    this.logger.debug("Click", selector, `${duration}ms`);
+  }
+
+  private async resolveElementBox(selector: string, options: FrameSelectorOptions): Promise<ElementBox | null> {
+    const parsed = parseSelector(selector);
+    const pierce = Boolean(options.pierceShadowDom);
+    const helpers = serializeShadowDomHelpers();
+    const expression = parsed.type === "xpath"
+      ? `(function() {
+          const result = document.evaluate(${JSON.stringify(parsed.value)}, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+          if (!result || !(result instanceof Element)) {
+            return null;
+          }
+          result.scrollIntoView({ block: 'center', inline: 'center' });
+          const rect = result.getBoundingClientRect();
+          const style = window.getComputedStyle(result);
+          return { x: rect.x, y: rect.y, width: rect.width, height: rect.height, visible: rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none' && Number(style.opacity || '1') > 0 };
+        })()`
+      : `(function() {
+          const querySelectorDeep = ${helpers.querySelectorDeep};
+          const root = document;
+          const selector = ${JSON.stringify(parsed.value)};
+          const el = ${pierce ? "querySelectorDeep(root, selector)" : "root.querySelector(selector)"};
+          if (!el) {
+            return null;
+          }
+          el.scrollIntoView({ block: 'center', inline: 'center' });
+          const rect = el.getBoundingClientRect();
+          const style = window.getComputedStyle(el);
+          return { x: rect.x, y: rect.y, width: rect.width, height: rect.height, visible: rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none' && Number(style.opacity || '1') > 0 };
+        })()`;
+
+    const boxParams: Record<string, unknown> = {
+      expression,
+      returnByValue: true
+    };
+    if (this.contextId) {
+      boxParams.contextId = this.contextId;
+    }
+    const result = await this.session.send<{ result: { value: ElementBox | null } }>("Runtime.evaluate", boxParams);
+
+    return result?.result?.value ?? null;
+  }
+
+  private async querySelectorInternal(selector: string, options: FrameSelectorOptions, forceXPath: boolean): Promise<QueryResult | null> {
+    const parsed = forceXPath ? { type: "xpath", value: selector.trim() } : parseSelector(selector);
+    const pierce = Boolean(options.pierceShadowDom);
+    const helpers = serializeShadowDomHelpers();
+    const expression = parsed.type === "xpath"
+      ? `(function() {
+          const result = document.evaluate(${JSON.stringify(parsed.value)}, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+          return result || null;
+        })()`
+      : `(function() {
+          const querySelectorDeep = ${helpers.querySelectorDeep};
+          const root = document;
+          const selector = ${JSON.stringify(parsed.value)};
+          return ${pierce ? "querySelectorDeep(root, selector)" : "root.querySelector(selector)"};
+        })()`;
+
+    const queryParams: Record<string, unknown> = {
+      expression,
+      returnByValue: false
+    };
+    if (this.contextId) {
+      queryParams.contextId = this.contextId;
+    }
+    const response = await this.session.send<{ result: { subtype?: string; objectId?: string } }>("Runtime.evaluate", queryParams);
+
+    if (response.result?.subtype === "null" || !response.result?.objectId) {
+      return null;
+    }
+
+    return { objectId: response.result.objectId, contextId: this.contextId ?? 0 };
+  }
+
+  private async querySelectorAllInternal(selector: string, options: FrameSelectorOptions, forceXPath: boolean): Promise<QueryResult[]> {
+    const parsed = forceXPath ? { type: "xpath", value: selector.trim() } : parseSelector(selector);
+    const pierce = Boolean(options.pierceShadowDom);
+    const helpers = serializeShadowDomHelpers();
+    const expression = parsed.type === "xpath"
+      ? `(function() {
+          const result = document.evaluate(${JSON.stringify(parsed.value)}, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+          const nodes = [];
+          for (let i = 0; i < result.snapshotLength; i += 1) {
+            nodes.push(result.snapshotItem(i));
+          }
+          return nodes;
+        })()`
+      : `(function() {
+          const querySelectorAllDeep = ${helpers.querySelectorAllDeep};
+          const root = document;
+          const selector = ${JSON.stringify(parsed.value)};
+          return ${pierce ? "querySelectorAllDeep(root, selector)" : "Array.from(root.querySelectorAll(selector))"};
+        })()`;
+
+    const listParams: Record<string, unknown> = {
+      expression,
+      returnByValue: false
+    };
+    if (this.contextId) {
+      listParams.contextId = this.contextId;
+    }
+    const response = await this.session.send<{ result: { objectId?: string } }>("Runtime.evaluate", listParams);
+
+    if (!response.result?.objectId) {
+      return [];
+    }
+
+    const properties = await this.session.send<{ result: Array<{ name?: string; value?: { objectId?: string } }> }>("Runtime.getProperties", {
+      objectId: response.result.objectId,
+      ownProperties: true
+    });
+
+    const handles: QueryResult[] = [];
+    for (const prop of properties.result) {
+      if (prop.name && !/^\d+$/.test(prop.name)) {
+        continue;
+      }
+      const objectId = prop.value?.objectId;
+      if (objectId) {
+        handles.push({ objectId, contextId: this.contextId ?? 0 });
+      }
+    }
+
+    await this.releaseObject(response.result.objectId);
+    return handles;
+  }
+
+  private async evaluateInContext(fnOrString: string | ((...args: any[]) => any), args: any[]): Promise<any> {
+    if (typeof fnOrString === "string") {
+      const params: Record<string, unknown> = {
+        expression: fnOrString,
+        returnByValue: true,
+        awaitPromise: true
+      };
+      if (this.contextId) {
+        params.contextId = this.contextId;
+      }
+      const result = await this.session.send<{ result: { value?: unknown } }>("Runtime.evaluate", params);
+      return result.result.value;
+    }
+
+    const serializedArgs = args.map((arg) => serializeArgument(arg)).join(", ");
+    const expression = `(${fnOrString.toString()})(${serializedArgs})`;
+    const params: Record<string, unknown> = {
+      expression,
+      returnByValue: true,
+      awaitPromise: true
+    };
+    if (this.contextId) {
+      params.contextId = this.contextId;
+    }
+    const result = await this.session.send<{ result: { value?: unknown } }>("Runtime.evaluate", params);
+    return result.result.value;
+  }
+
+  private async releaseObject(objectId: string) {
+    try {
+      await this.session.send("Runtime.releaseObject", { objectId });
+    } catch {
+      // ignore release errors
+    }
+  }
+}
+
+function serializeArgument(value: unknown) {
+  if (value === undefined) {
+    return "undefined";
+  }
+  return JSON.stringify(value);
+}
