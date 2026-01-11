@@ -2,7 +2,7 @@ import { describe, it, expect as vitestExpect } from "vitest";
 import path from "path";
 import fs from "fs";
 import { pathToFileURL } from "url";
-import { automaton } from "../src/index.js";
+import { chromium } from "../src/index.js";
 import { expect as automatonExpect } from "../src/assert/expect.js";
 
 const runIntegration = process.env.RUN_INTEGRATION === "1";
@@ -12,7 +12,7 @@ const fixturePath = path.resolve(process.cwd(), "fixtures", "ui-app.html");
 
 describe("ui app integration", () => {
   testFn("validates core automation features", async () => {
-    const browser = await automaton.launch({
+    const browser = await chromium.launch({
       headless: true,
       args: process.platform === "linux"
         ? ["--no-sandbox", "--no-zygote", "--disable-dev-shm-usage"]
@@ -53,6 +53,9 @@ describe("ui app integration", () => {
     const screenshotPath = path.join(artifactsDir, `ui-app-${Date.now()}.png`);
     await page.screenshot({ path: screenshotPath, format: "png" });
     vitestExpect(fs.existsSync(screenshotPath)).toBe(true);
+    const base64 = await page.screenshotBase64({ format: "png" });
+    vitestExpect(typeof base64).toBe("string");
+    vitestExpect(base64.length).toBeGreaterThan(100);
     console.log(`Screenshot saved: ${screenshotPath}`);
     await browser.close();
   }, 120000);
