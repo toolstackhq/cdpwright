@@ -46,7 +46,8 @@ await browser.close();
 
 ## Documentation Site
 
-Docs are built with VitePress and published to GitHub Pages.
+Docs are built with VitePress and published to GitHub Pages:
+https://quitecode9-lab.github.io/chromium-automation/
 
 ## Architecture
 
@@ -62,7 +63,7 @@ graph LR
   Browser --> Page[Page]
   Page --> Frame[Frame]
   Page --> Locator[Locator]
-  Page --> Expect[expect()]
+  Page --> Expect[expect]
 ```
 
 ## Locators
