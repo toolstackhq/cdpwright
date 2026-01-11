@@ -1,6 +1,6 @@
-import { automaton, expect } from "@quitecode/chromium-automaton";
+import { chromium, expect } from "@quitecode/chromium-automaton";
 
-const browser = await automaton.launch({
+const browser = await chromium.launch({
   headless: false,
   args: [
     "--no-sandbox",
