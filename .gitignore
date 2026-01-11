@@ -4,3 +4,5 @@ example.png
 *.log
 .DS_Store
 tests/artifacts/
+docs/.vitepress/cache/
+docs/.vitepress/dist/
