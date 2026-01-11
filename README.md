@@ -1,6 +1,6 @@
 # Chromium Automaton
 
-[![ci](https://github.com/quitecode9-lab/chromium-automation/actions/workflows/ci.yml/badge.svg)](https://github.com/quitecode9-lab/chromium-automation/actions/workflows/ci.yml)
+[![ci](https://github.com/quitecode9-lab/chromium-automation/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/quitecode9-lab/chromium-automation/actions/workflows/ci.yml)
 
 Chromium Automaton is a lightweight, Chromium-only browser automation library built directly on the Chrome DevTools Protocol (CDP). It offers a Playwright-style API without bundling any runner, fixtures, or reporting.
 
