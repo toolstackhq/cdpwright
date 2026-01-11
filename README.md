@@ -28,13 +28,14 @@ npx chromium-automaton download --latest
 ## Usage
 
 ```ts
-import { automaton, expect } from "@quitecode/chromium-automaton";
+import { chromium, expect } from "@quitecode/chromium-automaton";
 
-const browser = await automaton.launch({ headless: true });
+const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage();
 
 await page.goto("https://example.com", { waitUntil: "load" });
 await page.click("h1");
+const screenshotBase64 = await page.screenshotBase64();
 
 await expect(page).element("h1").toHaveText(/Example Domain/);
 
