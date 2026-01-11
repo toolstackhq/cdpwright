@@ -1,5 +1,7 @@
 # Chromium Automaton
 
+[![ci](https://github.com/quitecode9-lab/chromium-automation/actions/workflows/ci.yml/badge.svg)](https://github.com/quitecode9-lab/chromium-automation/actions/workflows/ci.yml)
+
 Chromium Automaton is a lightweight, Chromium-only browser automation library built directly on the Chrome DevTools Protocol (CDP). It offers a Playwright-style API without bundling any runner, fixtures, or reporting.
 
 ## What it is
@@ -40,6 +42,23 @@ const screenshotBase64 = await page.screenshotBase64();
 await expect(page).element("h1").toHaveText(/Example Domain/);
 
 await browser.close();
+```
+
+## Architecture
+
+```mermaid
+graph LR
+  CLI[CLI: chromium-automaton download] --> Downloader[Downloader]
+  Downloader --> Cache[Chromium Cache]
+  User[User Code] --> API[chromium.launch]
+  API --> Manager[ChromiumManager]
+  Manager --> Chromium[Chromium Process]
+  Manager --> Conn[CDP Connection]
+  Conn --> Browser[Browser]
+  Browser --> Page[Page]
+  Page --> Frame[Frame]
+  Page --> Locator[Locator]
+  Page --> Expect[expect()]
 ```
 
 ## Locators

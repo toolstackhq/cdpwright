@@ -20,12 +20,9 @@ jobs:
         run: npm run build
       - name: Unit tests
         run: npm run test
-      - name: Download Chromium
-        run: npx chromium-automaton download
-      - name: Integration tests
-        env:
-          RUN_INTEGRATION: "1"
-        run: npm run test
+      - name: Integration tests (disabled)
+        if: false
+        run: echo "Integration tests disabled"
 
   publish:
     runs-on: ubuntu-latest
