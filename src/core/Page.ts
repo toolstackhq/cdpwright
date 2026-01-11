@@ -147,6 +147,19 @@ export class Page {
     return buffer;
   }
 
+  async screenshotBase64(options: Omit<ScreenshotOptions, "path"> = {}) {
+    const start = Date.now();
+    this.events.emit("action:start", { name: "screenshotBase64", frameId: this.mainFrameId });
+    const result = await this.session.send<{ data: string }>("Page.captureScreenshot", {
+      format: options.format ?? "png",
+      quality: options.quality,
+      fromSurface: true
+    });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "screenshotBase64", frameId: this.mainFrameId, durationMs: duration });
+    return result.data;
+  }
+
   getEvents() {
     return this.events;
   }
