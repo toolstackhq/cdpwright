@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Chromium Automaton Checkout</title>
+  <style>
+    :root {
+      --bg: #f4f2ed;
+      --card: #ffffff;
+      --ink: #1f1f1f;
+      --accent: #2b6ff7;
+      --muted: #6b6b6b;
+      --border: #e2ddd5;
+    }
+
+    body {
+      font-family: "Trebuchet MS", Verdana, sans-serif;
+      padding: 32px;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    h1 {
+      margin: 0 0 16px;
+      letter-spacing: 0.5px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    }
+
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+      min-width: 220px;
+    }
+
+    label {
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--muted);
+    }
+
+    .spacer { height: 1200px; }
+
+    .theme-dark { background: #141414; color: #f2f2f2; }
+    .theme-light { background: #f8f8f8; color: #222; }
+
+    button {
+      margin-right: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--accent);
+      color: #fff;
+      cursor: pointer;
+    }
+
+    button:active { transform: translateY(1px); }
+
+    input, select {
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      margin-right: 8px;
+    }
+
+    p { color: var(--muted); }
+    .muted { color: var(--muted); }
+    h2 { margin: 0 0 12px; }
+  </style>
+</head>
+<body>
+  <h1 id="title">Checkout</h1>
+
+  <div class="card theme-light" id="theme-card">
+    <div class="row">
+      <div>
+        <p id="theme-text">Light theme</p>
+        <p class="muted">Switch the UI mode for review.</p>
+      </div>
+      <button id="toggle-theme">Toggle Theme</button>
+    </div>
+  </div>
+
+  <div class="card" id="order-card">
+    <h2 id="order-title">Purchase Order</h2>
+    <div class="row">
+      <div class="field">
+        <label for="customer-name">Customer</label>
+        <input id="customer-name" placeholder="Jane Doe" />
+      </div>
+      <div class="field">
+        <label for="customer-email">Email</label>
+        <input id="customer-email" placeholder="jane@shop.test" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="field">
+        <label for="shipping-address">Shipping Address</label>
+        <input id="shipping-address" placeholder="12 Market Street" />
+      </div>
+      <div class="field">
+        <label for="shipping-speed">Shipping Speed</label>
+        <select id="shipping-speed">
+          <option value="">Choose speed</option>
+          <option value="standard">Standard</option>
+          <option value="express">Express</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="product-card">
+    <h2>Items</h2>
+    <div class="row">
+      <div class="field">
+        <label for="product-qty">Quantity</label>
+        <input id="product-qty" value="1" />
+      </div>
+      <div class="field">
+        <label for="product-note">Gift Note</label>
+        <input id="product-note" placeholder="Add a note" />
+      </div>
+      <button id="apply-discount">Apply Discount</button>
+    </div>
+    <p id="discount-output">Discount: none</p>
+  </div>
+
+  <div class="card" id="summary-card">
+    <h2>Summary</h2>
+    <p id="summary-customer">Customer: -</p>
+    <p id="summary-shipping">Shipping: -</p>
+    <p id="summary-total">Total: $0.00</p>
+    <button id="place-order">Place Order</button>
+    <p id="order-status">Status: idle</p>
+  </div>
+
+  <div class="card" id="shadow-card">
+    <h2>Payment Widget</h2>
+    <div id="shadow-host"></div>
+  </div>
+
+  <div class="spacer"></div>
+  <p id="scroll-target">End of Order</p>
+
+  <script>
+    const toggleTheme = document.getElementById("toggle-theme");
+    const themeCard = document.getElementById("theme-card");
+    const themeText = document.getElementById("theme-text");
+    const customerName = document.getElementById("customer-name");
+    const customerEmail = document.getElementById("customer-email");
+    const shippingAddress = document.getElementById("shipping-address");
+    const shippingSpeed = document.getElementById("shipping-speed");
+    const productQty = document.getElementById("product-qty");
+    const productNote = document.getElementById("product-note");
+    const applyDiscount = document.getElementById("apply-discount");
+    const discountOutput = document.getElementById("discount-output");
+    const placeOrder = document.getElementById("place-order");
+    const orderStatus = document.getElementById("order-status");
+    const summaryCustomer = document.getElementById("summary-customer");
+    const summaryShipping = document.getElementById("summary-shipping");
+    const summaryTotal = document.getElementById("summary-total");
+
+    function updateSummary() {
+      const qty = Number(productQty.value || "0");
+      const subtotal = qty * 42;
+      const discount = discountOutput.textContent.includes("applied") ? 10 : 0;
+      const total = Math.max(subtotal - discount, 0);
+      summaryCustomer.textContent = `Customer: ${customerName.value || "-"}`;
+      summaryShipping.textContent = `Shipping: ${shippingSpeed.value || "-"}`;
+      summaryTotal.textContent = `Total: $${total.toFixed(2)}`;
+    }
+
+    toggleTheme.addEventListener("click", () => {
+      const isLight = themeCard.classList.contains("theme-light");
+      themeCard.classList.toggle("theme-light", !isLight);
+      themeCard.classList.toggle("theme-dark", isLight);
+      themeText.textContent = isLight ? "Dark theme" : "Light theme";
+    });
+
+    applyDiscount.addEventListener("click", () => {
+      discountOutput.textContent = "Discount: applied";
+      updateSummary();
+    });
+
+    [customerName, shippingSpeed, productQty].forEach((el) => {
+      el.addEventListener("change", updateSummary);
+    });
+
+    placeOrder.addEventListener("dblclick", () => {
+      orderStatus.textContent = `Status: placed for ${customerEmail.value || "unknown"}`;
+      updateSummary();
+    });
+
+    const host = document.getElementById("shadow-host");
+    const shadow = host.attachShadow({ mode: "open" });
+    const shadowBtn = document.createElement("button");
+    shadowBtn.id = "shadow-button";
+    shadowBtn.textContent = "Shadow Button";
+    const shadowOut = document.createElement("p");
+    shadowOut.id = "shadow-output";
+    shadowOut.textContent = "Shadow: idle";
+    shadowBtn.addEventListener("click", () => {
+      shadowOut.textContent = "Shadow: clicked";
+    });
+    shadow.appendChild(shadowBtn);
+    shadow.appendChild(shadowOut);
+  </script>
+</body>
+</html>

@@ -3,3 +3,4 @@ dist/
 example.png
 *.log
 .DS_Store
+tests/artifacts/
