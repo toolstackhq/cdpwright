@@ -181,14 +181,14 @@ export class Frame {
 
     const centerX = box.x + box.width / 2;
     const centerY = box.y + box.height / 2;
-    const clickCount = isDouble ? 2 : 1;
-
-    await this.session.send("Input.dispatchMouseEvent", { type: "mousePressed", x: centerX, y: centerY, button: "left", clickCount });
-    await this.session.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: centerX, y: centerY, button: "left", clickCount });
+    await this.session.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: centerX, y: centerY });
+    await this.session.send("Input.dispatchMouseEvent", { type: "mousePressed", x: centerX, y: centerY, button: "left", clickCount: 1, buttons: 1 });
+    await this.session.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: centerX, y: centerY, button: "left", clickCount: 1, buttons: 0 });
 
     if (isDouble) {
-      await this.session.send("Input.dispatchMouseEvent", { type: "mousePressed", x: centerX, y: centerY, button: "left", clickCount });
-      await this.session.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: centerX, y: centerY, button: "left", clickCount });
+      await this.session.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: centerX, y: centerY });
+      await this.session.send("Input.dispatchMouseEvent", { type: "mousePressed", x: centerX, y: centerY, button: "left", clickCount: 2, buttons: 1 });
+      await this.session.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: centerX, y: centerY, button: "left", clickCount: 2, buttons: 0 });
     }
 
     const duration = Date.now() - start;
