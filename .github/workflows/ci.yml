@@ -1,0 +1,47 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+      - name: Install dependencies
+        run: npm install
+      - name: Build
+        run: npm run build
+      - name: Unit tests
+        run: npm run test
+      - name: Download Chromium
+        run: npx chromium-automaton download
+      - name: Integration tests
+        env:
+          RUN_INTEGRATION: "1"
+        run: npm run test
+
+  publish:
+    runs-on: ubuntu-latest
+    if: false
+    needs: build-test
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          registry-url: https://registry.npmjs.org
+          cache: npm
+      - run: npm install
+      - run: npm run build
+      - name: Publish to npm (disabled)
+        run: echo "Publishing disabled"
