@@ -44,6 +44,10 @@ await expect(page).element("h1").toHaveText(/Example Domain/);
 await browser.close();
 ```
 
+## Documentation Site
+
+Docs are built with VitePress and published to GitHub Pages.
+
 ## Architecture
 
 ```mermaid
