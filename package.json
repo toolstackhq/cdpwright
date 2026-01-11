@@ -1,0 +1,47 @@
+{
+  "name": "@quitecode/chromium-automaton",
+  "version": "0.1.0",
+  "description": "Lightweight Chromium-only browser automation library using CDP",
+  "type": "module",
+  "bin": {
+    "chromium-automaton": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./assert": {
+      "types": "./dist/assert/expect.d.ts",
+      "import": "./dist/assert/expect.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "ws": "^8.17.0",
+    "yauzl": "^2.10.0"
+  },
+  "devDependencies": {
+    "@types/yauzl": "^2.10.3",
+    "@types/ws": "^8.5.12",
+    "happy-dom": "^14.12.1",
+    "tsup": "^8.3.0",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
+  },
+  "license": "MIT"
+}
