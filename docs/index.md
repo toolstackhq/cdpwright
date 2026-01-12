@@ -17,6 +17,7 @@ hero:
 - Chromium-only browser automation built on the Chrome DevTools Protocol
 - Small API surface with Page, Frame, and Locator primitives
 - CLI that downloads and caches Chromium snapshots
+- Action and assertion logging with simple opt-out
 
 ## What it is not
 - Not a test runner or framework
