@@ -14,6 +14,9 @@ export type LaunchOptions = {
   args?: string[];
   timeoutMs?: number;
   logLevel?: LogLevel;
+  logEvents?: boolean;
+  logActions?: boolean;
+  logAssertions?: boolean;
   executablePath?: string;
 };
 
@@ -141,6 +144,21 @@ export class ChromiumManager {
 
     const connection = new Connection(wsEndpoint, logger);
     const events = new AutomationEvents();
+    const logEvents = resolveLogFlag(options.logEvents, process.env.CHROMIUM_AUTOMATON_LOG, true);
+    const logActions = resolveLogFlag(options.logActions, process.env.CHROMIUM_AUTOMATON_LOG_ACTIONS, true);
+    const logAssertions = resolveLogFlag(options.logAssertions, process.env.CHROMIUM_AUTOMATON_LOG_ASSERTIONS, true);
+    if (logEvents && logActions) {
+      events.on("action:end", (payload) => {
+        const args = buildLogArgs(payload.selector, payload.durationMs);
+        logger.info(`Action ${payload.name}`, ...args);
+      });
+    }
+    if (logEvents && logAssertions) {
+      events.on("assertion:end", (payload) => {
+        const args = buildLogArgs(payload.selector, payload.durationMs);
+        logger.info(`Assertion ${payload.name}`, ...args);
+      });
+    }
     const browser = new Browser(connection, child, logger, events);
 
     return browser;
@@ -153,6 +171,28 @@ export class ChromiumManager {
     }
     return defaultCacheRoot(platform);
   }
+}
+
+function resolveLogFlag(explicit: boolean | undefined, envValue: string | undefined, defaultValue: boolean) {
+  if (explicit !== undefined) {
+    return explicit;
+  }
+  if (envValue == null) {
+    return defaultValue;
+  }
+  const normalized = envValue.trim().toLowerCase();
+  return !["0", "false", "no", "off"].includes(normalized);
+}
+
+function buildLogArgs(selector?: string, durationMs?: number) {
+  const args: string[] = [];
+  if (selector) {
+    args.push(selector);
+  }
+  if (typeof durationMs === "number") {
+    args.push(`${durationMs}ms`);
+  }
+  return args;
 }
 
 function ensureExecutable(executablePath: string) {
