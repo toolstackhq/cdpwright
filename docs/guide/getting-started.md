@@ -18,11 +18,13 @@ npx chromium-automaton download --latest
 ```ts
 import { chromium, expect } from "@quitecode/chromium-automaton";
 
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, logEvents: true });
 const page = await browser.newPage();
 
 await page.goto("https://example.com", { waitUntil: "load" });
 await expect(page).element("h1").toHaveText(/Example Domain/);
+
+await page.typeSecure("#password", "super-secret");
 
 await browser.close();
 ```
