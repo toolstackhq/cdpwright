@@ -1,125 +1,59 @@
-# Chromium Automaton
+# Visa Application Wizard (CDP Stress Test)
 
-[![ci](https://github.com/quitecode9-lab/chromium-automation/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/quitecode9-lab/chromium-automation/actions/workflows/ci.yml)
+## How to run
+Open `index.html` directly in a browser. No server required.
 
-Chromium Automaton is a lightweight, Chromium-only browser automation library built directly on the Chrome DevTools Protocol (CDP). It offers a Playwright-style API without bundling any runner, fixtures, or reporting.
+## Folder structure
+- `index.html` - static entry point
+- `styles.css` - minimal styling
+- `steps.js` - data-driven step and field definitions
+- `app.js` - renderer, state, and behaviour
+- `receipt-template.txt` - receipt template loaded at runtime
 
-## What it is
-- A small CDP client with a focused API for Chromium automation
-- A CLI for downloading and caching Chromium snapshots
-- Runner-agnostic assertions you can plug into any test setup
+## Deterministic mode
+Open the settings panel via the gear icon.
+- Enable **Deterministic mode** to make load delays, draft IDs, and application references repeatable.
+- Update the **Seed** to change the deterministic sequence.
 
-## What it is not
-- Not a framework, runner, or test harness
-- Not multi-browser (Chromium only)
-- Not a report generator (no built-in reporting)
+## Data-testid conventions
+All interactive elements include stable `data-testid` attributes.
+- Wrapper: `field.testid + "-wrap"`
+- Input: `field.testid`
+- Error: `field.testid + "-error"`
+- Help: `field.testid + "-help"`
 
-## Install
+Examples:
+- `fld-email-wrap`, `fld-email`, `fld-email-error`
+- `fld-travelHistory-wrap`, `fld-travelHistory-add`, `fld-travelHistory-0-country`
 
-```bash
-npm install @quitecode/chromium-automaton
+## Shadow DOM access
+The **Emergency contact** step renders a custom element with an open shadow root.
+
+Example access:
+```js
+const host = document.querySelector('[data-testid="fld-emergencyContact"] emergency-contact');
+const shadowInput = host.shadowRoot.querySelector('[data-testid="fld-ecName"]');
 ```
 
-## Download Chromium
+## Suggested automation scenarios
+- Fill the entire wizard across 21 steps
+- Trigger all conditional branches (gender other, dependants, spouse, citizenship, convictions, previous applications)
+- Handle the randomized loading overlay with `data-load-ms` and `window.APP_DEBUG.lastLoadMs`
+- Interact with autocomplete and multiselect controls
+- Add and remove repeater rows (address history and travel history)
+- Upload files and wait for simulated progress completion
+- Interact with shadow DOM fields in the emergency contact step
+- Save draft and resume draft on reload
+- Complete payment simulation and assert the success toast
+- Submit and download the receipt file
 
-```bash
-npx chromium-automaton download
-npx chromium-automaton download --latest
-```
+## Browser session isolation (vs Playwright)
+- Automaton creates a fresh temporary Chromium profile on every `chromium.launch()` (temp `--user-data-dir`), deleted on `browser.close()`.
+- Pages opened from the same browser share that launch’s profile; start a new browser per test for stricter isolation.
+- Playwright defaults to fresh contexts per `browser.newContext()`; our per-launch isolation is analogous to starting a new WebDriver session per test.
+- You can override the profile path via `LaunchOptions.userDataDir` or `CHROMIUM_AUTOMATON_USER_DATA_DIR` if you need persistence.
 
-## Usage
-
-```ts
-import { chromium, expect } from "@quitecode/chromium-automaton";
-
-const browser = await chromium.launch({ headless: true });
-const page = await browser.newPage();
-
-await page.goto("https://example.com", { waitUntil: "load" });
-await page.click("h1");
-const screenshotBase64 = await page.screenshotBase64();
-
-await expect(page).element("h1").toHaveText(/Example Domain/);
-
-await page.typeSecure("#password", "super-secret");
-const token = await page.textSecure("#auth-token");
-
-await browser.close();
-```
-
-## Documentation Site
-
-Docs are built with VitePress and published to GitHub Pages:
-https://quitecode9-lab.github.io/chromium-automation/
-
-## Architecture
-
-```mermaid
-graph LR
-  CLI[CLI: chromium-automaton download] --> Downloader[Downloader]
-  Downloader --> Cache[Chromium Cache]
-  User[User Code] --> API[chromium.launch]
-  API --> Manager[ChromiumManager]
-  Manager --> Chromium[Chromium Process]
-  Manager --> Conn[CDP Connection]
-  Conn --> Browser[Browser]
-  Browser --> Page[Page]
-  Page --> Frame[Frame]
-  Page --> Locator[Locator]
-  Page --> Expect[expect]
-```
-
-## Locators
-
-```ts
-const locator = page.locator("#login", { pierceShadowDom: true });
-await locator.click();
-await locator.type("admin");
-```
-
-## Frames
-
-```ts
-const frame = page.frame({ urlIncludes: "embedded" });
-if (frame) {
-  await frame.click("button.submit");
-}
-```
-
-## Shadow DOM
-
-```ts
-await page.click("button.action", { pierceShadowDom: true });
-const text = await page.evaluate(() => document.title);
-```
-
-## Assertions
-
-```ts
-await expect(page).element(".ready").toExist();
-await expect(page).element(".hidden").not.toBeVisible();
-await expect(page).element("h1").toHaveText("Example Domain");
-```
-
-## Environment configuration
-- `CHROMIUM_AUTOMATON_CACHE_DIR`: override cache root
-- `CHROMIUM_AUTOMATON_REVISION`: override pinned revision
-- `CHROMIUM_AUTOMATON_EXECUTABLE_PATH`: bypass download and use this executable
-- `CHROMIUM_AUTOMATON_LOG_LEVEL`: error, warn, info, debug, trace
-- `CHROMIUM_AUTOMATON_LOG`: set to `false` to disable action/assertion logs
-
-## Sensitive data
-Action and assertion logs never include typed or captured text values, only the action name and selector. For extra caution, use `typeSecure`, `textSecure`, or `valueSecure` to avoid logging selectors as well.
-
-Default cache root:
-- Linux and macOS: `~/.cache/chromium-automaton`
-- Windows: `%LOCALAPPDATA%\chromium-automaton`
-
-## Limitations
-- Chromium only (no Chrome, Firefox, WebKit)
-- XPath selectors do not pierce shadow DOM
-- `evaluate(string)` is unsafe if the string includes untrusted input
-- Only http/https are allowed in `goto` unless `allowFileUrl` is true
-
-## ESM
-This package is ESM-only. Use `import` syntax in Node 18+.
+## File protocol gotchas
+- `fetch('receipt-template.txt')` may fail under `file://` in some browsers; the app uses an embedded fallback template if it does.
+- Some browsers block autoplay of downloads; the receipt download may prompt for confirmation.
+- LocalStorage is per-file-origin; drafts persist for the same `index.html` location.
