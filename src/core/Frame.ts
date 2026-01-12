@@ -167,6 +167,143 @@ export class Frame {
     return result.result.value ?? null;
   }
 
+  async attribute(selector: string, name: string, options: FrameSelectorOptions = {}) {
+    return this.evalOnSelector<string | null>(selector, options, false, `
+      if (!el || !(el instanceof Element)) {
+        return null;
+      }
+      return el.getAttribute(${JSON.stringify(name)});
+    `);
+  }
+
+  async value(selector: string, options: FrameSelectorOptions = {}) {
+    return this.evalOnSelector<string | null>(selector, options, false, `
+      if (!el) {
+        return null;
+      }
+      if ("value" in el) {
+        return el.value ?? "";
+      }
+      return el.getAttribute("value");
+    `);
+  }
+
+  async isEnabled(selector: string, options: FrameSelectorOptions = {}) {
+    return this.evalOnSelector<boolean | null>(selector, options, false, `
+      if (!el) {
+        return null;
+      }
+      const disabled = Boolean(el.disabled) || el.hasAttribute("disabled");
+      const ariaDisabled = el.getAttribute && el.getAttribute("aria-disabled") === "true";
+      return !(disabled || ariaDisabled);
+    `);
+  }
+
+  async isChecked(selector: string, options: FrameSelectorOptions = {}) {
+    return this.evalOnSelector<boolean | null>(selector, options, false, `
+      if (!el) {
+        return null;
+      }
+      const aria = el.getAttribute && el.getAttribute("aria-checked");
+      if (aria === "true") {
+        return true;
+      }
+      if (aria === "false") {
+        return false;
+      }
+      if ("checked" in el) {
+        return Boolean(el.checked);
+      }
+      return null;
+    `);
+  }
+
+  async count(selector: string, options: FrameSelectorOptions = {}) {
+    const parsed = parseSelector(selector);
+    const pierce = Boolean(options.pierceShadowDom);
+    const helpers = serializeShadowDomHelpers();
+    const expression = parsed.type === "xpath"
+      ? `(function() {
+          const result = document.evaluate(${JSON.stringify(parsed.value)}, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+          return result.snapshotLength;
+        })()`
+      : `(function() {
+          const querySelectorAllDeep = ${helpers.querySelectorAllDeep};
+          const root = document;
+          const selector = ${JSON.stringify(parsed.value)};
+          const nodes = ${pierce ? "querySelectorAllDeep(root, selector)" : "root.querySelectorAll(selector)"};
+          return nodes.length;
+        })()`;
+
+    const params: Record<string, unknown> = {
+      expression,
+      returnByValue: true
+    };
+    if (this.contextId) {
+      params.contextId = this.contextId;
+    }
+    const result = await this.session.send<{ result: { value?: number } }>("Runtime.evaluate", params);
+    return result.result.value ?? 0;
+  }
+
+  async classes(selector: string, options: FrameSelectorOptions = {}) {
+    return this.evalOnSelector<string[] | null>(selector, options, false, `
+      if (!el) {
+        return null;
+      }
+      if (!el.classList) {
+        return [];
+      }
+      return Array.from(el.classList);
+    `);
+  }
+
+  async css(selector: string, property: string, options: FrameSelectorOptions = {}) {
+    return this.evalOnSelector<string | null>(selector, options, false, `
+      if (!el) {
+        return null;
+      }
+      const style = window.getComputedStyle(el);
+      return style.getPropertyValue(${JSON.stringify(property)}) || "";
+    `);
+  }
+
+  async hasFocus(selector: string, options: FrameSelectorOptions = {}) {
+    return this.evalOnSelector<boolean | null>(selector, options, false, `
+      if (!el) {
+        return null;
+      }
+      return document.activeElement === el;
+    `);
+  }
+
+  async isInViewport(selector: string, options: FrameSelectorOptions = {}, fully = false) {
+    return this.evalOnSelector<boolean | null>(selector, options, false, `
+      if (!el) {
+        return null;
+      }
+      const rect = el.getBoundingClientRect();
+      const viewWidth = window.innerWidth || document.documentElement.clientWidth;
+      const viewHeight = window.innerHeight || document.documentElement.clientHeight;
+      if (${fully ? "true" : "false"}) {
+        return rect.top >= 0 && rect.left >= 0 && rect.bottom <= viewHeight && rect.right <= viewWidth;
+      }
+      return rect.bottom > 0 && rect.right > 0 && rect.top < viewHeight && rect.left < viewWidth;
+    `);
+  }
+
+  async isEditable(selector: string, options: FrameSelectorOptions = {}) {
+    return this.evalOnSelector<boolean | null>(selector, options, false, `
+      if (!el) {
+        return null;
+      }
+      const disabled = Boolean(el.disabled) || el.hasAttribute("disabled");
+      const readOnly = Boolean(el.readOnly) || el.hasAttribute("readonly");
+      const ariaDisabled = el.getAttribute && el.getAttribute("aria-disabled") === "true";
+      return !(disabled || readOnly || ariaDisabled);
+    `);
+  }
+
   private async performClick(selector: string, options: ClickOptions, isDouble: boolean) {
     const start = Date.now();
     const actionName = isDouble ? "dblclick" : "click";
@@ -356,6 +493,38 @@ export class Frame {
     } catch {
       // ignore release errors
     }
+  }
+
+  private buildElementExpression(selector: string, options: FrameSelectorOptions, forceXPath: boolean, body: string) {
+    const parsed = forceXPath ? { type: "xpath", value: selector.trim() } : parseSelector(selector);
+    const pierce = Boolean(options.pierceShadowDom);
+    const helpers = serializeShadowDomHelpers();
+    if (parsed.type === "xpath") {
+      return `(function() {
+        const el = document.evaluate(${JSON.stringify(parsed.value)}, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+        ${body}
+      })()`;
+    }
+    return `(function() {
+      const querySelectorDeep = ${helpers.querySelectorDeep};
+      const root = document;
+      const selector = ${JSON.stringify(parsed.value)};
+      const el = ${pierce ? "querySelectorDeep(root, selector)" : "root.querySelector(selector)"};
+      ${body}
+    })()`;
+  }
+
+  private async evalOnSelector<T>(selector: string, options: FrameSelectorOptions, forceXPath: boolean, body: string): Promise<T> {
+    const expression = this.buildElementExpression(selector, options, forceXPath, body);
+    const params: Record<string, unknown> = {
+      expression,
+      returnByValue: true
+    };
+    if (this.contextId) {
+      params.contextId = this.contextId;
+    }
+    const result = await this.session.send<{ result: { value?: T } }>("Runtime.evaluate", params);
+    return result.result.value as T;
   }
 }
 
