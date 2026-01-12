@@ -42,5 +42,32 @@ Frame mirrors Page for query/action methods.
 - `locator.exists()`
 - `locator.text()`
 
+## Assertions
+```ts
+import { expect } from "@quitecode/chromium-automaton";
+
+await expect(page).element("#status").toBeVisible();
+```
+
+Common assertions:
+- `toExist()` / `not.toExist()`
+- `toBeVisible()` / `toBeHidden()`
+- `toBeEnabled()` / `toBeDisabled()`
+- `toBeChecked()` / `toBeUnchecked()`
+- `toBeEditable()`
+- `toHaveText(textOrRegex)`
+- `toHaveExactText(textOrRegex)`
+- `toContainText(textOrRegex)`
+- `toHaveValue(valueOrRegex)`
+- `toHaveAttribute(name, valueOrRegex?)`
+- `toHaveId(idOrRegex)`
+- `toHaveName(nameOrRegex)`
+- `toHaveCount(count)`
+- `toHaveClass(nameOrRegex)`
+- `toHaveClasses(names)`
+- `toHaveCss(property, valueOrRegex)`
+- `toHaveFocus()`
+- `toBeInViewport({ fully?: boolean })`
+
 ## Selector routing
 Selectors are automatically routed to CSS or XPath. XPath is selected when the input starts with `/`, `./`, `.//`, `..`, or `(` followed by `/` or `.`.
