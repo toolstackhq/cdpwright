@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import os from "os";
 import http from "http";
 import { spawn } from "child_process";
 import { Logger, LogLevel } from "../logging/Logger.js";
@@ -18,6 +19,7 @@ export type LaunchOptions = {
   logActions?: boolean;
   logAssertions?: boolean;
   executablePath?: string;
+  userDataDir?: string;
 };
 
 export type DownloadOptions = {
@@ -116,6 +118,13 @@ export class ChromiumManager {
     }
     ensureExecutable(resolvedExecutable);
 
+    const cleanupTasks: Array<() => void> = [];
+    let userDataDir = options.userDataDir ?? process.env.CHROMIUM_AUTOMATON_USER_DATA_DIR;
+    if (!userDataDir) {
+      userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "chromium-automaton-"));
+      cleanupTasks.push(() => fs.rmSync(userDataDir as string, { recursive: true, force: true }));
+    }
+
     const args = [
       "--remote-debugging-port=0",
       "--no-first-run",
@@ -125,6 +134,9 @@ export class ChromiumManager {
       "--disable-backgrounding-occluded-windows",
       "--disable-renderer-backgrounding"
     ];
+    if (userDataDir) {
+      args.push(`--user-data-dir=${userDataDir}`);
+    }
     if (process.platform === "linux") {
       args.push("--disable-crash-reporter", "--disable-crashpad");
     }
@@ -160,7 +172,7 @@ export class ChromiumManager {
         logger.info(`Assertion ${payload.name}`, ...args);
       });
     }
-    const browser = new Browser(connection, child, logger, events);
+    const browser = new Browser(connection, child, logger, events, cleanupTasks);
 
     return browser;
   }
