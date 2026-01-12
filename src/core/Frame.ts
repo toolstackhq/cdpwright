@@ -16,6 +16,7 @@ export type ClickOptions = FrameSelectorOptions & {
 
 export type TypeOptions = FrameSelectorOptions & {
   timeoutMs?: number;
+  sensitive?: boolean;
 };
 
 export type QueryResult = {
@@ -97,7 +98,7 @@ export class Frame {
 
   async type(selector: string, text: string, options: TypeOptions = {}) {
     const start = Date.now();
-    this.events.emit("action:start", { name: "type", selector, frameId: this.id });
+    this.events.emit("action:start", { name: "type", selector, frameId: this.id, sensitive: options.sensitive });
     await waitFor(async () => {
       const box = await this.resolveElementBox(selector, options);
       if (!box || !box.visible) {
@@ -128,8 +129,12 @@ export class Frame {
 
     await this.session.send("Input.insertText", { text });
     const duration = Date.now() - start;
-    this.events.emit("action:end", { name: "type", selector, frameId: this.id, durationMs: duration });
+    this.events.emit("action:end", { name: "type", selector, frameId: this.id, durationMs: duration, sensitive: options.sensitive });
     this.logger.debug("Type", selector, `${duration}ms`);
+  }
+
+  async typeSecure(selector: string, text: string, options: TypeOptions = {}) {
+    return this.type(selector, text, { ...options, sensitive: true });
   }
 
   async exists(selector: string, options: FrameSelectorOptions = {}) {
@@ -167,6 +172,15 @@ export class Frame {
     return result.result.value ?? null;
   }
 
+  async textSecure(selector: string, options: FrameSelectorOptions = {}) {
+    const start = Date.now();
+    this.events.emit("action:start", { name: "text", selector, frameId: this.id, sensitive: true });
+    const result = await this.text(selector, options);
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "text", selector, frameId: this.id, durationMs: duration, sensitive: true });
+    return result;
+  }
+
   async attribute(selector: string, name: string, options: FrameSelectorOptions = {}) {
     return this.evalOnSelector<string | null>(selector, options, false, `
       if (!el || !(el instanceof Element)) {
@@ -186,6 +200,15 @@ export class Frame {
       }
       return el.getAttribute("value");
     `);
+  }
+
+  async valueSecure(selector: string, options: FrameSelectorOptions = {}) {
+    const start = Date.now();
+    this.events.emit("action:start", { name: "value", selector, frameId: this.id, sensitive: true });
+    const result = await this.value(selector, options);
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "value", selector, frameId: this.id, durationMs: duration, sensitive: true });
+    return result;
   }
 
   async isEnabled(selector: string, options: FrameSelectorOptions = {}) {
