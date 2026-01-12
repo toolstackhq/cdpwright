@@ -155,6 +155,7 @@ export class ChromiumManager {
     const wsEndpoint = await fetchWebSocketDebuggerUrl(httpUrl);
 
     const connection = new Connection(wsEndpoint, logger);
+    await closeInitialPages(connection, logger);
     const events = new AutomationEvents();
     const logEvents = resolveLogFlag(options.logEvents, process.env.CHROMIUM_AUTOMATON_LOG, true);
     const logActions = resolveLogFlag(options.logActions, process.env.CHROMIUM_AUTOMATON_LOG_ACTIONS, true);
@@ -183,6 +184,19 @@ export class ChromiumManager {
       return path.resolve(envRoot.trim());
     }
     return defaultCacheRoot(platform);
+  }
+}
+
+async function closeInitialPages(connection: Connection, logger: Logger) {
+  try {
+    const targets = await connection.send<{ targetInfos: Array<{ targetId: string; type: string }> }>("Target.getTargets");
+    for (const info of targets.targetInfos) {
+      if (info.type === "page") {
+        await connection.send("Target.closeTarget", { targetId: info.targetId });
+      }
+    }
+  } catch (err) {
+    logger.warn("Failed to close initial pages", err);
   }
 }
 
