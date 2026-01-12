@@ -125,8 +125,20 @@ export class Page {
     return this.mainFrame().type(selector, text, options);
   }
 
+  async typeSecure(selector: string, text: string, options?: { pierceShadowDom?: boolean; timeoutMs?: number }) {
+    return this.mainFrame().typeSecure(selector, text, options);
+  }
+
   async evaluate<T = unknown>(fnOrString: string | ((...args: any[]) => any), ...args: any[]): Promise<T> {
     return this.mainFrame().evaluate(fnOrString, ...args);
+  }
+
+  async textSecure(selector: string, options?: { pierceShadowDom?: boolean }) {
+    return this.mainFrame().textSecure(selector, options);
+  }
+
+  async valueSecure(selector: string, options?: { pierceShadowDom?: boolean }) {
+    return this.mainFrame().valueSecure(selector, options);
   }
 
   async screenshot(options: ScreenshotOptions = {}) {
