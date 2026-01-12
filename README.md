@@ -49,8 +49,8 @@ const shadowInput = host.shadowRoot.querySelector('[data-testid="fld-ecName"]');
 
 ## Browser session isolation (vs Playwright)
 - Automaton creates a fresh temporary Chromium profile on every `chromium.launch()` (temp `--user-data-dir`), deleted on `browser.close()`.
-- Pages opened from the same browser share that launch’s profile; start a new browser per test for stricter isolation.
-- Playwright defaults to fresh contexts per `browser.newContext()`; our per-launch isolation is analogous to starting a new WebDriver session per test.
+- Pages opened from the same browser share that launch’s profile; start a new browser or a new `BrowserContext` per test for stricter isolation.
+- Playwright defaults to fresh contexts per `browser.newContext()`; our `browser.newContext()` mirrors that model (isolated storage per context without launching a new process).
 - You can override the profile path via `LaunchOptions.userDataDir` or `CHROMIUM_AUTOMATON_USER_DATA_DIR` if you need persistence.
 
 ## File protocol gotchas

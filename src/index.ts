@@ -1,5 +1,5 @@
 import { ChromiumManager, LaunchOptions } from "./browser/ChromiumManager.js";
-import { Browser } from "./core/Browser.js";
+import { Browser, BrowserContext } from "./core/Browser.js";
 import { Page } from "./core/Page.js";
 import { Frame } from "./core/Frame.js";
 import { Locator } from "./core/Locator.js";
@@ -21,4 +21,4 @@ export const automaton = {
 
 export const chromium = automaton;
 
-export { Browser, Page, Frame, Locator, Logger, LogLevel, AutomationEvents, expect, AssertionError };
+export { Browser, BrowserContext, Page, Frame, Locator, Logger, LogLevel, AutomationEvents, expect, AssertionError };
