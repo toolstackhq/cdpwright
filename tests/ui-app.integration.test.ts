@@ -33,9 +33,41 @@ describe("ui app integration", () => {
       }
     });
 
-    await page.type("#product-qty", "2");
+    await page.evaluate(() => {
+      const qty = document.querySelector("#product-qty");
+      if (qty instanceof HTMLInputElement) {
+        qty.value = "2";
+        qty.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    });
     await page.click("#apply-discount");
     await automatonExpect(page).element("#discount-output").toHaveText("Discount: applied");
+    await automatonExpect(page).element("#customer-name").toHaveValue("Jane Buyer");
+    await automatonExpect(page).element("#customer-email").toHaveAttribute("placeholder", "jane@shop.test");
+    await automatonExpect(page).element("#order-title").toHaveExactText("Purchase Order");
+    await automatonExpect(page).element("#summary-total").toContainText("Total:");
+    await automatonExpect(page).element("#apply-discount").toBeEnabled();
+
+    await page.evaluate(() => {
+      const email = document.querySelector("#customer-email");
+      if (email) {
+        email.setAttribute("name", "email");
+      }
+      const toggle = document.querySelector("#toggle-theme");
+      if (toggle) {
+        toggle.setAttribute("disabled", "true");
+      }
+      const themeCard = document.querySelector("#theme-card");
+      if (themeCard instanceof HTMLElement) {
+        themeCard.style.backgroundColor = "rgb(10, 10, 10)";
+      }
+    });
+    await automatonExpect(page).element("#customer-email").toHaveName("email");
+    await automatonExpect(page).element("#toggle-theme").toBeDisabled();
+    await automatonExpect(page).element("#theme-card").toHaveClass("theme-light");
+    await automatonExpect(page).element("#theme-card").toHaveClasses(["card", "theme-light"]);
+    await automatonExpect(page).element("#theme-card").toHaveCss("background-color", "rgb(10, 10, 10)");
+    await automatonExpect(page).element(".card").toHaveCount(5);
 
     await automatonExpect(page).element("#summary-total").toHaveText("Total: $74.00");
 
@@ -45,8 +77,42 @@ describe("ui app integration", () => {
     await page.click("#shadow-button", { pierceShadowDom: true });
     await automatonExpect(page).element("#shadow-output", { pierceShadowDom: true }).toHaveText("Shadow: clicked");
 
+    await page.evaluate(() => {
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.id = "promo-optin";
+      checkbox.checked = true;
+      document.body.appendChild(checkbox);
+    });
+    await automatonExpect(page).element("#promo-optin").toBeChecked();
+    await page.evaluate(() => {
+      const checkbox = document.querySelector("#promo-optin");
+      if (checkbox instanceof HTMLInputElement) {
+        checkbox.checked = false;
+      }
+    });
+    await automatonExpect(page).element("#promo-optin").toBeUnchecked();
+
+    await page.evaluate(() => {
+      const email = document.querySelector("#customer-email");
+      if (email instanceof HTMLElement) {
+        email.focus();
+      }
+    });
+    await automatonExpect(page).element("#customer-email").toHaveFocus();
+    await automatonExpect(page).element("#customer-email").toBeEditable();
+
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await automatonExpect(page).element("#scroll-target").toExist();
+    await automatonExpect(page).element("#scroll-target").toBeInViewport();
+
+    await page.evaluate(() => {
+      const discount = document.querySelector("#discount-output");
+      if (discount instanceof HTMLElement) {
+        discount.style.display = "none";
+      }
+    });
+    await automatonExpect(page).element("#discount-output").toBeHidden();
 
     const artifactsDir = path.resolve(process.cwd(), "tests", "artifacts");
     fs.mkdirSync(artifactsDir, { recursive: true });
