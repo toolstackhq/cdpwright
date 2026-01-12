@@ -94,7 +94,7 @@ export class Page {
     await this.waitForLifecycle(this.mainFrameId, lifecycleName, timeoutMs);
     const duration = Date.now() - start;
     this.events.emit("action:end", { name: "goto", selector: url, frameId: this.mainFrameId, durationMs: duration });
-    this.logger.info("Goto", url, `${duration}ms`);
+    this.logger.debug("Goto", url, `${duration}ms`);
   }
 
   async query(selector: string, options?: { pierceShadowDom?: boolean }) {
