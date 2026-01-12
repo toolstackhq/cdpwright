@@ -5,6 +5,7 @@ export type ActionEvent = {
   selector?: string;
   frameId?: string;
   durationMs?: number;
+  sensitive?: boolean;
 };
 
 export type AssertionEvent = {
