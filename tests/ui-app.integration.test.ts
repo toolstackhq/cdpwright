@@ -78,6 +78,21 @@ describe("ui app integration", () => {
     await automatonExpect(page).element("#shadow-output", { pierceShadowDom: true }).toHaveText("Shadow: clicked");
 
     await page.evaluate(() => {
+      const input = document.createElement("input");
+      input.id = "secure-input";
+      document.body.appendChild(input);
+      const output = document.createElement("p");
+      output.id = "secure-text";
+      output.textContent = "token: abc123";
+      document.body.appendChild(output);
+    });
+    await page.typeSecure("#secure-input", "secret-value");
+    const secureValue = await page.valueSecure("#secure-input");
+    vitestExpect(secureValue).toBe("secret-value");
+    const secureText = await page.textSecure("#secure-text");
+    vitestExpect(secureText).toBe("token: abc123");
+
+    await page.evaluate(() => {
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.id = "promo-optin";
