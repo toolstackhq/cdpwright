@@ -10,12 +10,14 @@ export class Browser {
   private process: ChildProcess;
   private logger: Logger;
   private events: AutomationEvents;
+  private cleanupTasks: Array<() => void>;
 
-  constructor(connection: Connection, child: ChildProcess, logger: Logger, events: AutomationEvents) {
+  constructor(connection: Connection, child: ChildProcess, logger: Logger, events: AutomationEvents, cleanupTasks: Array<() => void> = []) {
     this.connection = connection;
     this.process = child;
     this.logger = logger;
     this.events = events;
+    this.cleanupTasks = cleanupTasks;
   }
 
   on(event: "action:start" | "action:end" | "assertion:start" | "assertion:end", handler: (payload: any) => void) {
@@ -40,6 +42,13 @@ export class Browser {
     await this.connection.close();
     if (!this.process.killed) {
       this.process.kill();
+    }
+    for (const task of this.cleanupTasks) {
+      try {
+        task();
+      } catch {
+        // ignore cleanup errors
+      }
     }
   }
 }
