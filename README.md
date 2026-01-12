@@ -41,6 +41,9 @@ const screenshotBase64 = await page.screenshotBase64();
 
 await expect(page).element("h1").toHaveText(/Example Domain/);
 
+await page.typeSecure("#password", "super-secret");
+const token = await page.textSecure("#auth-token");
+
 await browser.close();
 ```
 
@@ -103,6 +106,10 @@ await expect(page).element("h1").toHaveText("Example Domain");
 - `CHROMIUM_AUTOMATON_REVISION`: override pinned revision
 - `CHROMIUM_AUTOMATON_EXECUTABLE_PATH`: bypass download and use this executable
 - `CHROMIUM_AUTOMATON_LOG_LEVEL`: error, warn, info, debug, trace
+- `CHROMIUM_AUTOMATON_LOG`: set to `false` to disable action/assertion logs
+
+## Sensitive data
+Action and assertion logs never include typed or captured text values, only the action name and selector. For extra caution, use `typeSecure`, `textSecure`, or `valueSecure` to avoid logging selectors as well.
 
 Default cache root:
 - Linux and macOS: `~/.cache/chromium-automaton`
