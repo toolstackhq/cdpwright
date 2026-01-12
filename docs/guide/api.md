@@ -11,6 +11,7 @@ Options:
 - `args?: string[]`
 - `timeoutMs?: number`
 - `logLevel?: "error" | "warn" | "info" | "debug" | "trace"`
+- `logEvents?: boolean`
 - `executablePath?: string`
 
 ## Browser
@@ -24,7 +25,10 @@ Options:
 - `page.click(selector, options)`
 - `page.dblclick(selector, options)`
 - `page.type(selector, text, options)`
+- `page.typeSecure(selector, text, options)`
 - `page.evaluate(fnOrString, ...args)`
+- `page.textSecure(selector, options)`
+- `page.valueSecure(selector, options)`
 - `page.screenshot(options)`
 - `page.screenshotBase64(options)`
 - `page.frames()`
@@ -33,7 +37,7 @@ Options:
 - `page.locator(selector, options?)`
 
 ## Frame
-Frame mirrors Page for query/action methods.
+Frame mirrors Page for query/action methods, including `typeSecure`, `textSecure`, and `valueSecure`.
 
 ## Locator
 - `locator.click()`
