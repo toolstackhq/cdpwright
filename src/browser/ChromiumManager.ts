@@ -149,7 +149,8 @@ export class ChromiumManager {
     const logAssertions = resolveLogFlag(options.logAssertions, process.env.CHROMIUM_AUTOMATON_LOG_ASSERTIONS, true);
     if (logEvents && logActions) {
       events.on("action:end", (payload) => {
-        const args = buildLogArgs(payload.selector, payload.durationMs);
+        const selector = payload.sensitive ? undefined : payload.selector;
+        const args = buildLogArgs(selector, payload.durationMs);
         logger.info(`Action ${payload.name}`, ...args);
       });
     }
