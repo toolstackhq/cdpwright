@@ -1,0 +1,11 @@
+Application Receipt
+
+Reference: {{APPLICATION_REF}}
+Name: {{FULL_NAME}}
+Date of birth: {{DOB}}
+Citizenship: {{CITIZENSHIP}}
+Email: {{EMAIL}}
+Phone: {{PHONE}}
+Submitted at: {{SUBMITTED_AT}}
+
+Summary: {{SUMMARY_JSON}}
