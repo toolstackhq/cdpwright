@@ -143,40 +143,41 @@ export class Frame {
     const pierce = Boolean(parsed.pierceShadowDom);
     const isXPath = parsed.isXPath;
     this.events.emit("action:start", { name: "fillInput", selector, frameId: this.id });
-    await waitFor(async () => {
-      const box = await this.resolveElementBox(selector, options);
-      if (!box || !box.visible) {
-        return false;
-      }
-      return true;
-    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `fillInput ${selector}` });
-
     const helpers = serializeShadowDomHelpers();
-    const expression = `(function() {
-      const querySelectorDeep = ${helpers.querySelectorDeep};
-      const selector = ${JSON.stringify(selector)};
-      const node = (function() {
-        if (${isXPath ? "true" : "false"}) {
-          const result = document.evaluate(selector, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-          return result.singleNodeValue;
+    await waitFor(async () => {
+      const expression = `(function() {
+        const querySelectorDeep = ${helpers.querySelectorDeep};
+        const selector = ${JSON.stringify(selector)};
+        const find = () => {
+          if (${isXPath ? "true" : "false"}) {
+            const result = document.evaluate(selector, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+            return result.singleNodeValue;
+          }
+          return ${pierce ? "querySelectorDeep(document, selector)" : "document.querySelector(selector)"};
+        };
+        const el = find();
+        if (!el) return false;
+        if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement)) {
+          return false;
         }
-        return ${pierce ? "querySelectorDeep(document, selector)" : "document.querySelector(selector)"};
-      })();
-      if (!node) return;
-      if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement || node instanceof HTMLSelectElement) {
-        node.value = ${JSON.stringify(value)};
-        node.dispatchEvent(new Event("input", { bubbles: true }));
-        node.dispatchEvent(new Event("change", { bubbles: true }));
+        el.value = ${JSON.stringify(value)};
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        const rect = el.getBoundingClientRect();
+        const style = window.getComputedStyle(el);
+        const visible = rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none" && Number(style.opacity || "1") > 0;
+        return visible;
+      })()`;
+      const params: Record<string, unknown> = {
+        expression,
+        returnByValue: true
+      };
+      if (this.contextId) {
+        params.contextId = this.contextId;
       }
-    })()`;
-    const params: Record<string, unknown> = {
-      expression,
-      returnByValue: true
-    };
-    if (this.contextId) {
-      params.contextId = this.contextId;
-    }
-    await this.session.send("Runtime.evaluate", params);
+      const result = await this.session.send<{ result: { value?: boolean } }>("Runtime.evaluate", params);
+      return Boolean(result.result?.value);
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `fillInput ${selector}` });
     const duration = Date.now() - start;
     this.events.emit("action:end", { name: "fillInput", selector, frameId: this.id, durationMs: duration });
     this.logger.debug("FillInput", selector, `${duration}ms`);
