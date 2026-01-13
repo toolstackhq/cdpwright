@@ -171,26 +171,11 @@ describe("visa wizard integration", () => {
 
       await nextStep(page, "emergency-contact");
       await page.expect("emergency-contact").toBeVisible();
-      await page.evaluate(() => {
-        const host = document.querySelector("emergency-contact");
-        if (!host || !host.shadowRoot) return;
-        const setValue = (sel: string, val: string) => {
-          const el = host.shadowRoot!.querySelector(sel) as HTMLInputElement | HTMLSelectElement | null;
-          if (!el) return;
-          el.value = val;
-          el.dispatchEvent(new Event("input", { bubbles: true }));
-          el.dispatchEvent(new Event("change", { bubbles: true }));
-        };
-        setValue('[data-testid="fld-ecName"]', "Jordan Lee");
-        const rel = host.shadowRoot!.querySelector('[data-testid="fld-ecRelationship"]') as HTMLSelectElement | null;
-        if (rel) {
-          rel.value = "Other";
-          rel.dispatchEvent(new Event("change", { bubbles: true }));
-        }
-        setValue('[data-testid="fld-ecRelationshipOther"]', "Neighbour");
-        setValue('[data-testid="fld-ecPhone"]', "+61 401 222 333");
-        setValue('[data-testid="fld-ecEmail"]', "jordan.lee@example.com");
-      });
+      await page.fillInput("emergency-contact >>> [data-testid=\"fld-ecName\"]", "Jordan Lee");
+      await page.fillInput("emergency-contact >>> [data-testid=\"fld-ecRelationship\"]", "Other");
+      await page.fillInput("emergency-contact >>> [data-testid=\"fld-ecRelationshipOther\"]", "Neighbour");
+      await page.fillInput("emergency-contact >>> [data-testid=\"fld-ecPhone\"]", "+61 401 222 333");
+      await page.fillInput("emergency-contact >>> [data-testid=\"fld-ecEmail\"]", "jordan.lee@example.com");
 
       await nextStep(page, "review-confirm");
       await page.click('[data-testid="fld-reviewedDetails"]');
