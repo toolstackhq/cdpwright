@@ -1,60 +1,47 @@
-# Visa Application Wizard (CDP Stress Test)
+# Chromium Automaton
 
-## How to run
-Open `index.html` directly in a browser. No server required.
+Chromium-only automation built on the Chrome DevTools Protocol (CDP). A lightweight, Playwright-style API with `Browser`, `Context`, `Page`, `Frame`, and `Locator` primitives—no test runner included.
 
-## Folder structure
-- `index.html` - static entry point
-- `styles.css` - minimal styling
-- `steps.js` - data-driven step and field definitions
-- `app.js` - renderer, state, and behaviour
-- `receipt-template.txt` - receipt template loaded at runtime
+## Quick start
 
-## Deterministic mode
-Open the settings panel via the gear icon.
-- Enable **Deterministic mode** to make load delays, draft IDs, and application references repeatable.
-- Update the **Seed** to change the deterministic sequence.
-
-## Data-testid conventions
-All interactive elements include stable `data-testid` attributes.
-- Wrapper: `field.testid + "-wrap"`
-- Input: `field.testid`
-- Error: `field.testid + "-error"`
-- Help: `field.testid + "-help"`
-
-Examples:
-- `fld-email-wrap`, `fld-email`, `fld-email-error`
-- `fld-travelHistory-wrap`, `fld-travelHistory-add`, `fld-travelHistory-0-country`
-
-## Shadow DOM access
-The **Emergency contact** step renders a custom element with an open shadow root.
-
-Example access:
-```js
-const host = document.querySelector('[data-testid="fld-emergencyContact"] emergency-contact');
-const shadowInput = host.shadowRoot.querySelector('[data-testid="fld-ecName"]');
+```bash
+npm install @quitecode/chromium-automaton
+npx chromium-automaton download    # downloads a pinned Chromium build
 ```
-Selectors support shadow piercing with `>>>` (e.g. `await page.click('emergency-contact >>> [data-testid="fld-ecPhone"]');`) without passing `pierceShadowDom` options.
 
-## Suggested automation scenarios
-- Fill the entire wizard across 21 steps
-- Trigger all conditional branches (gender other, dependants, spouse, citizenship, convictions, previous applications)
-- Handle the randomized loading overlay with `data-load-ms` and `window.APP_DEBUG.lastLoadMs`
-- Interact with autocomplete and multiselect controls
-- Add and remove repeater rows (address history and travel history)
-- Upload files and wait for simulated progress completion
-- Interact with shadow DOM fields in the emergency contact step
-- Save draft and resume draft on reload
-- Complete payment simulation and assert the success toast
-- Submit and download the receipt file
+```ts
+import { chromium, expect } from "@quitecode/chromium-automaton";
 
-## Browser session isolation (vs Playwright)
-- Automaton creates a fresh temporary Chromium profile on every `chromium.launch()` (temp `--user-data-dir`), deleted on `browser.close()`.
-- Pages opened from the same browser share that launch’s profile; start a new browser or a new `BrowserContext` per test for stricter isolation.
-- Playwright defaults to fresh contexts per `browser.newContext()`; our `browser.newContext()` mirrors that model (isolated storage per context without launching a new process).
-- You can override the profile path via `LaunchOptions.userDataDir` or `CHROMIUM_AUTOMATON_USER_DATA_DIR` if you need persistence.
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage();
 
-## File protocol gotchas
-- `fetch('receipt-template.txt')` may fail under `file://` in some browsers; the app uses an embedded fallback template if it does.
-- Some browsers block autoplay of downloads; the receipt download may prompt for confirmation.
-- LocalStorage is per-file-origin; drafts persist for the same `index.html` location.
+await page.goto("https://example.com");
+await expect(page).element("h1").toHaveText(/Example Domain/);
+
+await browser.close();
+```
+
+## Core ideas
+- CDP-only: no WebDriver, no playwright-core dependency.
+- Small surface: pages/frames/locators, plus built-in expect matchers.
+- Selector routing: CSS by default; XPath if the selector starts with `/`, `./`, `.//`, `..`, or `(/`. Shadow DOM via `>>>` (e.g., `host >>> button`).
+- Contexts: `browser.newContext()` gives incognito-style isolation without launching a new browser.
+- Downloads: `npx chromium-automaton download` (or `--latest`) fetches Chromium into a local cache.
+
+## Key APIs
+- `chromium.launch(options)` → `Browser`
+- `browser.newContext()` → isolated `BrowserContext`
+- `browser.newPage()` / `context.newPage()` → `Page`
+- `page.goto(url, { waitUntil: "load" | "domcontentloaded" })`
+- Actions: `click`, `dblclick`, `type`, `typeSecure`, `fillInput`, `selectOption`, `setFileInput`
+- Queries: `query`, `queryAll`, `queryXPath`, `queryAllXPath`, `locator`
+- Assertions: `expect(page).element("selector").toBeVisible()` (see `docs/guide/assertions.md`)
+
+## Docs
+Full guide and API reference live in `docs/` (VitePress). Start at `docs/guide/intro.md` or `docs/guide/api/`.
+
+## Demo app
+`index.html` is a local, data-driven visa-style wizard used to stress-test automation flows (no server required). Open it directly via `file://` to exercise navigation, conditionals, overlays, Shadow DOM, uploads, and receipts.
+
+## License
+MIT
