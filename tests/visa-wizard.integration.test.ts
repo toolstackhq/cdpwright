@@ -196,6 +196,7 @@ describe("visa wizard integration", () => {
       await page.click('[data-testid="fld-docsConfirm"]');
 
       await nextStep(page, "emergency-contact");
+      await page.expect('emergency-contact >>> [data-testid="fld-ecName"]').toBeVisible();
       await page.type('emergency-contact >>> [data-testid="fld-ecName"]', "Jordan Lee");
       await page.evaluate(() => {
         const host = document.querySelector("emergency-contact");
