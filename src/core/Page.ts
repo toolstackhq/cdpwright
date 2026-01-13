@@ -85,7 +85,10 @@ export class Page {
   async goto(url: string, options: GotoOptions = {}) {
     ensureAllowedUrl(url, { allowFileUrl: options.allowFileUrl });
     const waitUntil = options.waitUntil ?? "load";
-    const lifecycleName = waitUntil === "domcontentloaded" ? "DOMContentLoaded" : "load";
+    const lifecycleName = waitUntil === "domcontentloaded" ? "DOMContentLoaded" : waitUntil === "load" ? "load" : null;
+    if (!lifecycleName) {
+      throw new Error(`Invalid waitUntil "${waitUntil}". Use "load" or "domcontentloaded".`);
+    }
     const timeoutMs = options.timeoutMs ?? this.defaultTimeout;
 
     this.events.emit("action:start", { name: "goto", selector: url, frameId: this.mainFrameId });
