@@ -12,3 +12,6 @@ const text = await page.textContent("button-host >>> .title");
 ```
 
 Limitations: XPath selectors do not pierce shadow DOM; use CSS with `>>>`.
+:::danger
+XPath does not pierce shadow DOM. Use CSS with `>>>` for shadow traversal.
+:::
