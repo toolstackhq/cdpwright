@@ -9,7 +9,6 @@ await page.click("button-host >>> button.action");
 // Read text from inside a shadow root
 const text = await page.textContent("button-host >>> .title");
 
-// Legacy pierceShadowDom is removed; always use >>>.
 ```
 
 Limitations: XPath selectors do not pierce shadow DOM; use CSS with `>>>`.
