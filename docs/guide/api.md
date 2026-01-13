@@ -13,7 +13,6 @@ Options:
 - `logLevel?: "error" | "warn" | "info" | "debug" | "trace"`
 - `logEvents?: boolean`
 - `executablePath?: string`
-
 - `maximize?: boolean`
 ## Browser
 - `browser.newPage()`
