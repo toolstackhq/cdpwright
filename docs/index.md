@@ -10,7 +10,7 @@ hero:
       link: /guide/getting-started
     - theme: alt
       text: API Reference
-      link: /guide/api
+      link: /guide/api/
 ---
 
 ## What it is
