@@ -163,10 +163,7 @@ export class Frame {
         el.value = ${JSON.stringify(value)};
         el.dispatchEvent(new Event("input", { bubbles: true }));
         el.dispatchEvent(new Event("change", { bubbles: true }));
-        const rect = el.getBoundingClientRect();
-        const style = window.getComputedStyle(el);
-        const visible = rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none" && Number(style.opacity || "1") > 0;
-        return visible;
+        return true;
       })()`;
       const params: Record<string, unknown> = {
         expression,
