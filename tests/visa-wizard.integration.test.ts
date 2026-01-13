@@ -2,7 +2,6 @@ import { describe, it, expect as vitestExpect } from "vitest";
 import path from "path";
 import { pathToFileURL } from "url";
 import { chromium } from "../src/index.js";
-import { expect as automatonExpect } from "../src/assert/expect.js";
 
 const runIntegration = process.env.RUN_INTEGRATION === "1";
 const testFn = runIntegration ? it : it.skip;
@@ -32,8 +31,8 @@ async function setFileInput(page: any, selector: string, filename: string, conte
 }
 
 async function waitForStep(page: any, stepId: string) {
-  await automatonExpect(page).element(`[data-testid="step-${stepId}"]`).toBeVisible();
-  await automatonExpect(page).element('[data-testid="loading-overlay"]').toBeHidden();
+  await page.expect(`[data-testid="step-${stepId}"]`).toBeVisible();
+  await page.expect('[data-testid="loading-overlay"]').toBeHidden();
 }
 
 async function nextStep(page: any, stepId: string) {
@@ -57,9 +56,9 @@ describe("visa wizard integration", () => {
       await waitForStep(page, "start-eligibility");
 
       await page.click("#settings-gear");
-      await automatonExpect(page).element('[data-testid="settings-panel"]').toBeVisible();
+      await page.expect('[data-testid="settings-panel"]').toBeVisible();
       await page.click("#deterministic-toggle");
-      await automatonExpect(page).element("#deterministic-toggle").toBeChecked();
+      await page.expect("#deterministic-toggle").toBeChecked();
       await page.evaluate(() => {
         const seed = document.querySelector("#deterministic-seed");
         if (seed instanceof HTMLInputElement) {
@@ -74,12 +73,10 @@ describe("visa wizard integration", () => {
       await page.click('[data-testid="fld-eligibilityConfirm"]');
       await page.click('[data-testid="fld-portalUpdates"]');
       await page.click("#fld-eligibilityAccordion-toggle-0");
-      await automatonExpect(page)
-        .element('[data-testid="fld-eligibilityAccordion-section-0"]')
-        .toContainText("Document checklist");
+      await page.expect('[data-testid="fld-eligibilityAccordion-section-0"]').toContainText("Document checklist");
 
       await page.click("#save-draft");
-      await automatonExpect(page).element('[data-testid="draft-modal"]').toBeVisible();
+      await page.expect('[data-testid="draft-modal"]').toBeVisible();
       await page.click("#draft-close");
 
       await nextStep(page, "applicant-name-dob");
@@ -102,17 +99,13 @@ describe("visa wizard integration", () => {
       await selectValue(page, '[data-testid="fld-passportIssueCountry"]', "India");
       await page.type("#input-passportIssueDate", "2019-05-20");
       await setFileInput(page, '[data-testid="fld-passportUpload"]', "passport.txt", "passport data");
-      await automatonExpect(page)
-        .element('[data-testid="fld-passportUpload-progress-bar"]')
-        .toHaveAttribute("style", /100%/);
+      await page.expect('[data-testid="fld-passportUpload-progress-bar"]').toHaveAttribute("style", /100%/);
       await page.type("#input-nationalId", "IND-789456");
 
       await nextStep(page, "contact-details");
       await page.type("#input-email", "bad-email");
       await page.click("#next");
-      await automatonExpect(page)
-        .element('[data-testid="fld-email-error"]')
-        .toHaveText("Enter a valid email.");
+      await page.expect('[data-testid="fld-email-error"]').toHaveText("Enter a valid email.");
       await page.evaluate(() => {
         const email = document.querySelector("#input-email");
         if (email instanceof HTMLInputElement) {
@@ -133,11 +126,11 @@ describe("visa wizard integration", () => {
       await selectValue(page, '[data-testid="fld-state"]', "New South Wales");
       await page.type("#input-postcode", "2000");
       await page.click('[data-testid="fld-postalSame"]');
-      await automatonExpect(page).element('[data-testid="fld-postalSame"]').toBeChecked();
+      await page.expect('[data-testid="fld-postalSame"]').toBeChecked();
 
       await nextStep(page, "address-history");
       await page.click("#fld-addressHistory-add");
-      await automatonExpect(page).element("#input-addressHistory-0-address").toBeVisible();
+      await page.expect("#input-addressHistory-0-address").toBeVisible();
       await page.type("#input-addressHistory-0-address", "12 Market Street, Perth");
       await page.type("#input-addressHistory-0-from", "2019-01");
       await page.type("#input-addressHistory-0-to", "2021-06");
@@ -189,7 +182,7 @@ describe("visa wizard integration", () => {
       await page.click('[data-testid="fld-criminalConvictions-0"]');
       await page.type("#input-convictionDetails", "Minor traffic offence in 2016.");
       await page.click('[data-testid="fld-convictionAck"]');
-      await automatonExpect(page).element('[data-testid="fld-convictionAck"]').toBeChecked();
+      await page.expect('[data-testid="fld-convictionAck"]').toBeChecked();
 
       await nextStep(page, "previous-applications");
       await page.click('[data-testid="fld-previouslyApplied-0"]');
@@ -203,7 +196,7 @@ describe("visa wizard integration", () => {
       await page.click('[data-testid="fld-docsConfirm"]');
 
       await nextStep(page, "emergency-contact");
-      await page.type('[data-testid="fld-ecName"]', "Jordan Lee", { pierceShadowDom: true });
+      await page.type('[data-testid="fld-ecName"]', "Jordan Lee", );
       await page.evaluate(() => {
         const host = document.querySelector("emergency-contact");
         if (!host || !host.shadowRoot) return;
@@ -213,9 +206,9 @@ describe("visa wizard integration", () => {
           select.dispatchEvent(new Event("change", { bubbles: true }));
         }
       });
-      await page.type('[data-testid="fld-ecRelationshipOther"]', "Neighbour", { pierceShadowDom: true });
-      await page.type('[data-testid="fld-ecPhone"]', "+61 401 222 333", { pierceShadowDom: true });
-      await page.type('[data-testid="fld-ecEmail"]', "jordan.lee@example.com", { pierceShadowDom: true });
+      await page.type('[data-testid="fld-ecRelationshipOther"]', "Neighbour", );
+      await page.type('[data-testid="fld-ecPhone"]', "+61 401 222 333", );
+      await page.type('[data-testid="fld-ecEmail"]', "jordan.lee@example.com", );
 
       await nextStep(page, "review-confirm");
       await page.click('[data-testid="fld-reviewedDetails"]');
@@ -232,14 +225,14 @@ describe("visa wizard integration", () => {
       await page.type("#input-cardExpiry", "12/28");
       await page.type("#input-cardCvv", "123");
       await page.click("#pay-now");
-      await automatonExpect(page).element('[data-testid="toast"]').toHaveText("Payment successful");
+      await page.expect('[data-testid="toast"]').toHaveText("Payment successful");
 
       await nextStep(page, "final-review");
-      await automatonExpect(page).element('[data-testid="summary-table"]').toContainText("Ava Patel");
+      await page.expect('[data-testid="summary-table"]').toContainText("Ava Patel");
 
       await page.click("#next");
-      await automatonExpect(page).element('[data-testid="submission-screen"]').toBeVisible();
-      await automatonExpect(page).element('[data-testid="application-ref"]').toContainText("EVO-2026-");
+      await page.expect('[data-testid="submission-screen"]').toBeVisible();
+      await page.expect('[data-testid="application-ref"]').toContainText("EVO-2026-");
       await page.click("#download-receipt");
     } finally {
       if (browser) {
