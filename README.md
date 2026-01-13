@@ -38,7 +38,7 @@ await browser.close();
 - Assertions: `expect(page).element("selector").toBeVisible()` (see `docs/guide/assertions.md`)
 
 ## Docs
-Full guide and API reference live in `docs/` (VitePress). Start at `docs/guide/intro.md` or `docs/guide/api/`.
+Full guide and API reference: https://quitecode9-lab.github.io/chromium-automation/ (built from `docs/` via VitePress). Start at `docs/guide/intro.md` or `docs/guide/api/`.
 
 ## Demo app
 `index.html` is a local, data-driven visa-style wizard used to stress-test automation flows (no server required). Open it directly via `file://` to exercise navigation, conditionals, overlays, Shadow DOM, uploads, and receipts.
