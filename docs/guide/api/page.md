@@ -32,6 +32,7 @@ await page.dblclick(".row");
 ```ts
 await page.type("#email", "user@example.com");
 await page.typeSecure("#password", "s3cr3t"); // marks logs as sensitive
+await page.fillInput("#deterministic-seed", "42"); // sets value + input/change events
 ```
 
 ## Selects and uploads
