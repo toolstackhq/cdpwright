@@ -1,12 +1,18 @@
+function getElementCtor(root: Document | ShadowRoot | Element): typeof Element | null {
+  if (typeof Element !== "undefined") return Element;
+  const doc = (root as Document | ShadowRoot | Element & { ownerDocument?: Document }).ownerDocument;
+  const view = (doc || (root as any)).defaultView;
+  return view?.Element ?? null;
+}
+
 export function querySelectorDeep(root: Document | ShadowRoot | Element, selector: string): Element | null {
-  if (typeof Element === "undefined") {
-    return null;
-  }
+  const ElementCtor = getElementCtor(root);
+  if (!ElementCtor) return null;
   function walk(node: Document | ShadowRoot | Element, sel: string, results: Element[]) {
-    if (node instanceof Element && node.matches(sel)) {
+    if (node instanceof ElementCtor && (node as Element).matches(sel)) {
       results.push(node);
     }
-    if (node instanceof Element && node.shadowRoot) {
+    if (node instanceof ElementCtor && (node as Element).shadowRoot) {
       walk(node.shadowRoot, sel, results);
     }
     const children: Element[] = [];
@@ -42,14 +48,13 @@ export function querySelectorDeep(root: Document | ShadowRoot | Element, selecto
 }
 
 export function querySelectorAllDeep(root: Document | ShadowRoot | Element, selector: string): Element[] {
-  if (typeof Element === "undefined") {
-    return [];
-  }
+  const ElementCtor = getElementCtor(root);
+  if (!ElementCtor) return [];
   function walk(node: Document | ShadowRoot | Element, sel: string, results: Element[]) {
-    if (node instanceof Element && node.matches(sel)) {
+    if (node instanceof ElementCtor && (node as Element).matches(sel)) {
       results.push(node);
     }
-    if (node instanceof Element && node.shadowRoot) {
+    if (node instanceof ElementCtor && (node as Element).shadowRoot) {
       walk(node.shadowRoot, sel, results);
     }
     const children: Element[] = [];
