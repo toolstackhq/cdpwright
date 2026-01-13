@@ -188,6 +188,177 @@ export class Frame {
     this.logger.debug("FillInput", selector, `${duration}ms`);
   }
 
+  async findLocators(options: { highlight?: boolean } = {}) {
+    const start = Date.now();
+    this.events.emit("action:start", { name: "findLocators", frameId: this.id });
+    const expression = `(function() {
+      const highlight = ${options.highlight !== false};
+      const previous = Array.from(document.querySelectorAll(".__ca-locator-overlay"));
+      previous.forEach((el) => el.remove());
+
+      const cssEscape = (value) => {
+        if (typeof CSS !== "undefined" && CSS.escape) return CSS.escape(value);
+        return value.replace(/[^a-zA-Z0-9_-]/g, (c) => "\\\\" + c.charCodeAt(0).toString(16) + " ");
+      };
+
+      const visible = (el) => {
+        const rect = el.getBoundingClientRect();
+        const style = window.getComputedStyle(el);
+        return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none" && Number(style.opacity || "1") > 0;
+      };
+
+      const siblingsIndex = (el) => {
+        if (!el.parentElement) return 1;
+        const sibs = Array.from(el.parentElement.children).filter((n) => n.tagName === el.tagName);
+        return sibs.indexOf(el) + 1;
+      };
+
+      const xpathFor = (el) => {
+        const parts = [];
+        let node = el;
+        while (node && node.nodeType === 1 && node !== document.documentElement) {
+          const idx = siblingsIndex(node);
+          parts.unshift(node.tagName.toLowerCase() + "[" + idx + "]");
+          node = node.parentElement;
+        }
+        return "//" + parts.join("/");
+      };
+
+      const buildLocator = (el) => {
+        const testid = el.getAttribute("data-testid");
+        const id = el.id;
+        const name = el.getAttribute("name");
+        const aria = el.getAttribute("aria-label");
+        const labelledBy = el.getAttribute("aria-labelledby");
+        const placeholder = el.getAttribute("placeholder");
+        const role = el.getAttribute("role");
+        const labelText = (() => {
+          if (labelledBy) {
+            const ref = document.getElementById(labelledBy);
+            if (ref) return ref.textContent?.trim() || "";
+          }
+          if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+            const idRef = el.id && document.querySelector("label[for='" + el.id.replace(/'/g, "\\\\'") + "']");
+            if (idRef) return idRef.textContent?.trim() || "";
+            const wrap = el.closest("label");
+            if (wrap) return wrap.textContent?.trim() || "";
+          }
+          return "";
+        })();
+
+        let css = "";
+        let quality = "low";
+        let reason = "fallback";
+        if (testid) {
+          css = "[data-testid=\"" + testid.replace(/"/g, '\\\\"') + "\"]";
+          quality = "high";
+          reason = "data-testid";
+        } else if (id) {
+          css = "#" + cssEscape(id);
+          quality = "high";
+          reason = "id";
+        } else if (name) {
+          css = "[name=\"" + name.replace(/"/g, '\\\\"') + "\"]";
+          quality = "ok";
+          reason = "name";
+        } else if (aria) {
+          css = "[aria-label=\"" + aria.replace(/"/g, '\\\\"') + "\"]";
+          quality = "ok";
+          reason = "aria-label";
+        } else if (placeholder) {
+          css = "[placeholder=\"" + placeholder.replace(/"/g, '\\\\"') + "\"]";
+          quality = "low";
+          reason = "placeholder";
+        } else if (labelText) {
+          css = el.tagName.toLowerCase() + "[aria-label=\"" + labelText.replace(/"/g, '\\\\"') + "\"]";
+          quality = "low";
+          reason = "label text";
+        } else {
+          const nth = siblingsIndex(el);
+          css = el.tagName.toLowerCase() + ":nth-of-type(" + nth + ")";
+          quality = "low";
+          reason = "nth-of-type";
+        }
+
+        const tag = el.tagName.toLowerCase();
+        const type = el.getAttribute("type") || "";
+        const text = (el.textContent || "").trim().slice(0, 80);
+
+        return {
+          name: labelText || aria || placeholder || name || testid || id || tag,
+          css,
+          xpath: xpathFor(el),
+          quality,
+          reason,
+          visible: true,
+          tag,
+          type,
+          role,
+          text,
+          id,
+          nameAttr: name,
+          dataTestid: testid
+        };
+      };
+
+      const nodes = Array.from(document.querySelectorAll("input, select, textarea, button, a[href], [role='button'], [contenteditable='true']"));
+      const results = [];
+      nodes.forEach((el) => {
+        if (!visible(el)) return;
+        const locator = buildLocator(el);
+        results.push(locator);
+      });
+
+      if (highlight) {
+        results.forEach((loc, index) => {
+          const el = nodes[index];
+          if (!el) return;
+          const rect = el.getBoundingClientRect();
+          const overlay = document.createElement("div");
+          overlay.className = "__ca-locator-overlay";
+          overlay.style.position = "absolute";
+          overlay.style.left = rect.x + window.scrollX + "px";
+          overlay.style.top = rect.y + window.scrollY + "px";
+          overlay.style.width = rect.width + "px";
+          overlay.style.height = rect.height + "px";
+          overlay.style.border = "2px solid #e67e22";
+          overlay.style.borderRadius = "6px";
+          overlay.style.pointerEvents = "none";
+          overlay.style.zIndex = "99999";
+          const badge = document.createElement("div");
+          badge.textContent = String(index);
+          badge.style.position = "absolute";
+          badge.style.top = "-10px";
+          badge.style.left = "-10px";
+          badge.style.background = "#e67e22";
+          badge.style.color = "#fff";
+          badge.style.fontSize = "12px";
+          badge.style.padding = "2px 6px";
+          badge.style.borderRadius = "10px";
+          overlay.appendChild(badge);
+          document.body.appendChild(overlay);
+        });
+      }
+
+      if (console && console.table) {
+        console.table(results.map((r, idx) => ({ idx, name: r.name, css: r.css, quality: r.quality, reason: r.reason, tag: r.tag, type: r.type })));
+      }
+      return results;
+    })()`;
+
+    const params: Record<string, unknown> = {
+      expression,
+      returnByValue: true
+    };
+    if (this.contextId) {
+      params.contextId = this.contextId;
+    }
+    const result = await this.session.send<{ result: { value?: any[] } }>("Runtime.evaluate", params);
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "findLocators", frameId: this.id, durationMs: duration });
+    return (result.result?.value as any[]) ?? [];
+  }
+
   async exists(selector: string, options: FrameSelectorOptions = {}) {
     const handle = await this.query(selector, options);
     if (handle) {

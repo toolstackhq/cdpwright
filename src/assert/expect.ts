@@ -307,6 +307,10 @@ declare module "../core/Page.js" {
   interface Page {
     expect(): ReturnType<typeof expect>;
     expect(selector: string, options?: ExpectSelectorOptions): ElementExpectation;
+    find: {
+      locators: (options?: { highlight?: boolean }) => Promise<any[]>;
+    };
+    findLocators(options?: { highlight?: boolean }): Promise<any[]>;
   }
 }
 
@@ -318,3 +322,11 @@ declare module "../core/Page.js" {
   }
   return builder;
 };
+
+Object.defineProperty(Page.prototype, "find", {
+  get: function() {
+    return {
+      locators: (options?: { highlight?: boolean }) => (this as Page).findLocators(options)
+    };
+  }
+});

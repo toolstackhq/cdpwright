@@ -156,6 +156,10 @@ export class Page {
     return this.mainFrame().setFileInput(selector, name, contents, options);
   }
 
+  async findLocators(options: { highlight?: boolean } = {}) {
+    return this.mainFrame().findLocators(options);
+  }
+
   async screenshot(options: ScreenshotOptions = {}) {
     const start = Date.now();
     this.events.emit("action:start", { name: "screenshot", frameId: this.mainFrameId });
