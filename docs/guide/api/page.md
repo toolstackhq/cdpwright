@@ -8,7 +8,7 @@ High-level actions against the main frame of a page.
 await page.goto("https://example.com", { waitUntil: "load" });
 ```
 
-Supports `waitUntil: "load" | "domcontentloaded"`, `timeoutMs`, and `allowFileUrl`.
+Supports `waitUntil: "load" | "domcontentloaded"` (throws if invalid), `timeoutMs`, and `allowFileUrl`.
 
 ## Queries
 
