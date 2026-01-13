@@ -132,6 +132,10 @@ export class Page {
     return this.mainFrame().typeSecure(selector, text, options);
   }
 
+  async fillInput(selector: string, value: string, options: { timeoutMs?: number } = {}) {
+    return this.mainFrame().fillInput(selector, value, options);
+  }
+
   async evaluate<T = unknown>(fnOrString: string | ((...args: any[]) => any), ...args: any[]): Promise<T> {
     return this.mainFrame().evaluate(fnOrString, ...args);
   }
