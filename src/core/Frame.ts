@@ -137,6 +137,51 @@ export class Frame {
     return this.type(selector, text, { ...options, sensitive: true });
   }
 
+  async fillInput(selector: string, value: string, options: { timeoutMs?: number } = {}) {
+    const start = Date.now();
+    const parsed = parseSelector(selector);
+    const pierce = Boolean(parsed.pierceShadowDom);
+    const isXPath = parsed.isXPath;
+    this.events.emit("action:start", { name: "fillInput", selector, frameId: this.id });
+    await waitFor(async () => {
+      const box = await this.resolveElementBox(selector, options);
+      if (!box || !box.visible) {
+        return false;
+      }
+      return true;
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `fillInput ${selector}` });
+
+    const helpers = serializeShadowDomHelpers();
+    const expression = `(function() {
+      const querySelectorDeep = ${helpers.querySelectorDeep};
+      const selector = ${JSON.stringify(selector)};
+      const node = (function() {
+        if (${isXPath ? "true" : "false"}) {
+          const result = document.evaluate(selector, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
+          return result.singleNodeValue;
+        }
+        return ${pierce ? "querySelectorDeep(document, selector)" : "document.querySelector(selector)"};
+      })();
+      if (!node) return;
+      if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement || node instanceof HTMLSelectElement) {
+        node.value = ${JSON.stringify(value)};
+        node.dispatchEvent(new Event("input", { bubbles: true }));
+        node.dispatchEvent(new Event("change", { bubbles: true }));
+      }
+    })()`;
+    const params: Record<string, unknown> = {
+      expression,
+      returnByValue: true
+    };
+    if (this.contextId) {
+      params.contextId = this.contextId;
+    }
+    await this.session.send("Runtime.evaluate", params);
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "fillInput", selector, frameId: this.id, durationMs: duration });
+    this.logger.debug("FillInput", selector, `${duration}ms`);
+  }
+
   async exists(selector: string, options: FrameSelectorOptions = {}) {
     const handle = await this.query(selector, options);
     if (handle) {
