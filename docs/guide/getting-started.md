@@ -15,16 +15,26 @@ npx chromium-automaton download --latest
 
 ## Launch and navigate
 
-```ts
-import { chromium, expect } from "@quitecode/chromium-automaton";
+Create a quick script (e.g. `index.js`) and run it with `node index.js`:
 
-const browser = await chromium.launch({ headless: true, logEvents: true });
-const page = await browser.newPage();
+```js
+import { chromium } from "@quitecode/chromium-automaton";
 
-await page.goto("https://example.com", { waitUntil: "load" });
-await expect(page).element("h1").toHaveText(/Example Domain/);
+async function main() {
+  const browser = await chromium.launch({ headless: true, logEvents: true });
+  const page = await browser.newPage();
 
-await page.typeSecure("#password", "super-secret");
+  await page.goto("https://example.com", { waitUntil: "load" });
+  await page.expect("h1").toHaveText(/Example Domain/);
 
-await browser.close();
+  await page.type("#query", "hello world");
+  await page.click("#search");
+
+  await browser.close();
+}
+
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
 ```
