@@ -20,6 +20,7 @@ export type LaunchOptions = {
   logAssertions?: boolean;
   executablePath?: string;
   userDataDir?: string;
+  maximize?: boolean;
 };
 
 export type DownloadOptions = {
@@ -142,6 +143,9 @@ export class ChromiumManager {
     }
     if (options.headless ?? true) {
       args.push("--headless=new");
+    }
+    if (options.maximize) {
+      args.push("--start-maximized");
     }
     if (options.args) {
       args.push(...options.args);

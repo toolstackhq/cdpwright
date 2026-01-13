@@ -14,6 +14,7 @@ Options:
 - `logEvents?: boolean`
 - `executablePath?: string`
 
+- `maximize?: boolean`
 ## Browser
 - `browser.newPage()`
 - `browser.close()`
