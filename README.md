@@ -34,6 +34,7 @@ Example access:
 const host = document.querySelector('[data-testid="fld-emergencyContact"] emergency-contact');
 const shadowInput = host.shadowRoot.querySelector('[data-testid="fld-ecName"]');
 ```
+Selectors support shadow piercing with `>>>` (e.g. `await page.click('emergency-contact >>> [data-testid="fld-ecPhone"]');`) without passing `pierceShadowDom` options.
 
 ## Suggested automation scenarios
 - Fill the entire wizard across 21 steps

@@ -3,6 +3,7 @@ export type SelectorType = "css" | "xpath";
 export type ParsedSelector = {
   type: SelectorType;
   value: string;
+  pierceShadowDom?: boolean;
 };
 
 function isXPathSelector(input: string): boolean {
@@ -22,8 +23,10 @@ function isXPathSelector(input: string): boolean {
 
 export function parseSelector(input: string): ParsedSelector {
   const value = input.trim();
+  const pierceShadowDom = value.includes(">>>");
   return {
     type: isXPathSelector(value) ? "xpath" : "css",
-    value
+    value,
+    pierceShadowDom
   };
 }

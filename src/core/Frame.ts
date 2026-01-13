@@ -243,7 +243,7 @@ export class Frame {
 
   async count(selector: string, options: FrameSelectorOptions = {}) {
     const parsed = parseSelector(selector);
-    const pierce = Boolean(options.pierceShadowDom);
+    const pierce = Boolean(options.pierceShadowDom || parsed.pierceShadowDom);
     const helpers = serializeShadowDomHelpers();
     const expression = parsed.type === "xpath"
       ? `(function() {
@@ -358,7 +358,7 @@ export class Frame {
 
   private async resolveElementBox(selector: string, options: FrameSelectorOptions): Promise<ElementBox | null> {
     const parsed = parseSelector(selector);
-    const pierce = Boolean(options.pierceShadowDom);
+    const pierce = Boolean(options.pierceShadowDom || parsed.pierceShadowDom);
     const helpers = serializeShadowDomHelpers();
     const expression = parsed.type === "xpath"
       ? `(function() {
@@ -398,8 +398,8 @@ export class Frame {
   }
 
   private async querySelectorInternal(selector: string, options: FrameSelectorOptions, forceXPath: boolean): Promise<QueryResult | null> {
-    const parsed = forceXPath ? { type: "xpath", value: selector.trim() } : parseSelector(selector);
-    const pierce = Boolean(options.pierceShadowDom);
+    const parsed = forceXPath ? { type: "xpath", value: selector.trim(), pierceShadowDom: options.pierceShadowDom } : parseSelector(selector);
+    const pierce = Boolean(options.pierceShadowDom || parsed.pierceShadowDom);
     const helpers = serializeShadowDomHelpers();
     const expression = parsed.type === "xpath"
       ? `(function() {
@@ -430,8 +430,8 @@ export class Frame {
   }
 
   private async querySelectorAllInternal(selector: string, options: FrameSelectorOptions, forceXPath: boolean): Promise<QueryResult[]> {
-    const parsed = forceXPath ? { type: "xpath", value: selector.trim() } : parseSelector(selector);
-    const pierce = Boolean(options.pierceShadowDom);
+    const parsed = forceXPath ? { type: "xpath", value: selector.trim(), pierceShadowDom: options.pierceShadowDom } : parseSelector(selector);
+    const pierce = Boolean(options.pierceShadowDom || parsed.pierceShadowDom);
     const helpers = serializeShadowDomHelpers();
     const expression = parsed.type === "xpath"
       ? `(function() {
@@ -519,8 +519,8 @@ export class Frame {
   }
 
   private buildElementExpression(selector: string, options: FrameSelectorOptions, forceXPath: boolean, body: string) {
-    const parsed = forceXPath ? { type: "xpath", value: selector.trim() } : parseSelector(selector);
-    const pierce = Boolean(options.pierceShadowDom);
+    const parsed = forceXPath ? { type: "xpath", value: selector.trim(), pierceShadowDom: options.pierceShadowDom } : parseSelector(selector);
+    const pierce = Boolean(options.pierceShadowDom || parsed.pierceShadowDom);
     const helpers = serializeShadowDomHelpers();
     if (parsed.type === "xpath") {
       return `(function() {
