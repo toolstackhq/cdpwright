@@ -304,8 +304,9 @@ export class Frame {
       const nodes = Array.from(document.querySelectorAll("input, select, textarea, button, a[href], [role='button'], [contenteditable='true']"));
       const results = [];
       nodes.forEach((el) => {
-        if (!visible(el)) return;
+        const isVisible = visible(el);
         const locator = buildLocator(el);
+        locator.visible = isVisible;
         results.push(locator);
       });
 
