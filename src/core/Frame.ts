@@ -362,6 +362,7 @@ export class Frame {
     this.events.emit("action:end", { name: "findLocators", frameId: this.id, durationMs: duration });
     const value = (result.result?.value as any[]) ?? [];
     if (Array.isArray(value) && value.length > 0) {
+      this.logger.info("FindLocators", `${value.length} candidates`, value.slice(0, 5).map((v) => v.css || v.name || v.tag));
       return value;
     }
     // Fallback: very simple scan to avoid empty results
@@ -381,7 +382,9 @@ export class Frame {
       })()`,
       returnByValue: true
     });
-    return (result.result?.value as any[]) ?? [];
+    const fallback = (result.result?.value as any[]) ?? [];
+    this.logger.info("FindLocators", `${fallback.length} candidates`, fallback.slice(0, 5).map((v) => v.css || v.name || v.tag));
+    return fallback;
   }
 
   async exists(selector: string, options: FrameSelectorOptions = {}) {
