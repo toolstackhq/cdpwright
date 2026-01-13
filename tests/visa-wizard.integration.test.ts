@@ -196,7 +196,7 @@ describe("visa wizard integration", () => {
       await page.click('[data-testid="fld-docsConfirm"]');
 
       await nextStep(page, "emergency-contact");
-      await page.type('[data-testid="fld-ecName"]', "Jordan Lee", );
+      await page.type('emergency-contact >>> [data-testid="fld-ecName"]', "Jordan Lee");
       await page.evaluate(() => {
         const host = document.querySelector("emergency-contact");
         if (!host || !host.shadowRoot) return;
@@ -206,9 +206,9 @@ describe("visa wizard integration", () => {
           select.dispatchEvent(new Event("change", { bubbles: true }));
         }
       });
-      await page.type('[data-testid="fld-ecRelationshipOther"]', "Neighbour", );
-      await page.type('[data-testid="fld-ecPhone"]', "+61 401 222 333", );
-      await page.type('[data-testid="fld-ecEmail"]', "jordan.lee@example.com", );
+      await page.type('emergency-contact >>> [data-testid="fld-ecRelationshipOther"]', "Neighbour");
+      await page.type('emergency-contact >>> [data-testid="fld-ecPhone"]', "+61 401 222 333");
+      await page.type('emergency-contact >>> [data-testid="fld-ecEmail"]', "jordan.lee@example.com");
 
       await nextStep(page, "review-confirm");
       await page.click('[data-testid="fld-reviewedDetails"]');
