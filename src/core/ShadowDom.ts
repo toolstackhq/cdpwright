@@ -1,4 +1,7 @@
 export function querySelectorDeep(root: Document | ShadowRoot | Element, selector: string): Element | null {
+  if (typeof Element === "undefined") {
+    return null;
+  }
   function walk(node: Document | ShadowRoot | Element, sel: string, results: Element[]) {
     if (node instanceof Element && node.matches(sel)) {
       results.push(node);
@@ -39,6 +42,9 @@ export function querySelectorDeep(root: Document | ShadowRoot | Element, selecto
 }
 
 export function querySelectorAllDeep(root: Document | ShadowRoot | Element, selector: string): Element[] {
+  if (typeof Element === "undefined") {
+    return [];
+  }
   function walk(node: Document | ShadowRoot | Element, sel: string, results: Element[]) {
     if (node instanceof Element && node.matches(sel)) {
       results.push(node);
