@@ -6,7 +6,6 @@ import { AutomationEvents } from "../core/Events.js";
 
 export type ExpectSelectorOptions = {
   timeoutMs?: number;
-  pierceShadowDom?: boolean;
 };
 
 class ElementExpectation {

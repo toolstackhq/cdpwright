@@ -6,15 +6,13 @@ import { parseSelector } from "./Selectors.js";
 import { serializeShadowDomHelpers } from "./ShadowDom.js";
 import { Locator } from "./Locator.js";
 
-export type FrameSelectorOptions = {
-  pierceShadowDom?: boolean;
-};
+export type FrameSelectorOptions = {};
 
-export type ClickOptions = FrameSelectorOptions & {
+export type ClickOptions = {
   timeoutMs?: number;
 };
 
-export type TypeOptions = FrameSelectorOptions & {
+export type TypeOptions = {
   timeoutMs?: number;
   sensitive?: boolean;
 };
@@ -99,10 +97,10 @@ export class Frame {
   async type(selector: string, text: string, options: TypeOptions = {}) {
     const start = Date.now();
     const parsed = parseSelector(selector);
-    const pierce = Boolean(options.pierceShadowDom || parsed.pierceShadowDom);
+    const pierce = Boolean(parsed.pierceShadowDom);
     this.events.emit("action:start", { name: "type", selector, frameId: this.id, sensitive: options.sensitive });
     await waitFor(async () => {
-      const box = await this.resolveElementBox(selector, { ...options, pierceShadowDom: pierce });
+      const box = await this.resolveElementBox(selector, options);
       if (!box || !box.visible) {
         return false;
       }
@@ -245,7 +243,7 @@ export class Frame {
 
   async count(selector: string, options: FrameSelectorOptions = {}) {
     const parsed = parseSelector(selector);
-    const pierce = Boolean(options.pierceShadowDom || parsed.pierceShadowDom);
+    const pierce = Boolean(parsed.pierceShadowDom);
     const helpers = serializeShadowDomHelpers();
     const expression = parsed.type === "xpath"
       ? `(function() {
@@ -360,7 +358,7 @@ export class Frame {
 
   private async resolveElementBox(selector: string, options: FrameSelectorOptions): Promise<ElementBox | null> {
     const parsed = parseSelector(selector);
-    const pierce = Boolean(options.pierceShadowDom || parsed.pierceShadowDom);
+    const pierce = Boolean(parsed.pierceShadowDom);
     const helpers = serializeShadowDomHelpers();
     const expression = parsed.type === "xpath"
       ? `(function() {
@@ -400,8 +398,8 @@ export class Frame {
   }
 
   private async querySelectorInternal(selector: string, options: FrameSelectorOptions, forceXPath: boolean): Promise<QueryResult | null> {
-    const parsed = forceXPath ? { type: "xpath", value: selector.trim(), pierceShadowDom: options.pierceShadowDom } : parseSelector(selector);
-    const pierce = Boolean(options.pierceShadowDom || parsed.pierceShadowDom);
+    const parsed = forceXPath ? { type: "xpath", value: selector.trim(), pierceShadowDom: undefined } : parseSelector(selector);
+    const pierce = Boolean(parsed.pierceShadowDom);
     const helpers = serializeShadowDomHelpers();
     const expression = parsed.type === "xpath"
       ? `(function() {
@@ -432,8 +430,8 @@ export class Frame {
   }
 
   private async querySelectorAllInternal(selector: string, options: FrameSelectorOptions, forceXPath: boolean): Promise<QueryResult[]> {
-    const parsed = forceXPath ? { type: "xpath", value: selector.trim(), pierceShadowDom: options.pierceShadowDom } : parseSelector(selector);
-    const pierce = Boolean(options.pierceShadowDom || parsed.pierceShadowDom);
+    const parsed = forceXPath ? { type: "xpath", value: selector.trim(), pierceShadowDom: undefined } : parseSelector(selector);
+    const pierce = Boolean(parsed.pierceShadowDom);
     const helpers = serializeShadowDomHelpers();
     const expression = parsed.type === "xpath"
       ? `(function() {
@@ -521,8 +519,8 @@ export class Frame {
   }
 
   private buildElementExpression(selector: string, options: FrameSelectorOptions, forceXPath: boolean, body: string) {
-    const parsed = forceXPath ? { type: "xpath", value: selector.trim(), pierceShadowDom: options.pierceShadowDom } : parseSelector(selector);
-    const pierce = Boolean(options.pierceShadowDom || parsed.pierceShadowDom);
+    const parsed = forceXPath ? { type: "xpath", value: selector.trim(), pierceShadowDom: undefined } : parseSelector(selector);
+    const pierce = Boolean(parsed.pierceShadowDom);
     const helpers = serializeShadowDomHelpers();
     if (parsed.type === "xpath") {
       return `(function() {

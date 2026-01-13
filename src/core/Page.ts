@@ -78,8 +78,8 @@ export class Page {
     return null;
   }
 
-  locator(selector: string, options?: { pierceShadowDom?: boolean }) {
-    return new Locator(this.mainFrame(), selector, options);
+  locator(selector: string) {
+    return new Locator(this.mainFrame(), selector);
   }
 
   async goto(url: string, options: GotoOptions = {}) {
@@ -97,35 +97,35 @@ export class Page {
     this.logger.debug("Goto", url, `${duration}ms`);
   }
 
-  async query(selector: string, options?: { pierceShadowDom?: boolean }) {
-    return this.mainFrame().query(selector, options);
+  async query(selector: string) {
+    return this.mainFrame().query(selector);
   }
 
-  async queryAll(selector: string, options?: { pierceShadowDom?: boolean }) {
-    return this.mainFrame().queryAll(selector, options);
+  async queryAll(selector: string) {
+    return this.mainFrame().queryAll(selector);
   }
 
-  async queryXPath(selector: string, options?: { pierceShadowDom?: boolean }) {
-    return this.mainFrame().queryXPath(selector, options);
+  async queryXPath(selector: string) {
+    return this.mainFrame().queryXPath(selector);
   }
 
-  async queryAllXPath(selector: string, options?: { pierceShadowDom?: boolean }) {
-    return this.mainFrame().queryAllXPath(selector, options);
+  async queryAllXPath(selector: string) {
+    return this.mainFrame().queryAllXPath(selector);
   }
 
-  async click(selector: string, options?: { pierceShadowDom?: boolean; timeoutMs?: number }) {
+  async click(selector: string, options?: { timeoutMs?: number }) {
     return this.mainFrame().click(selector, options);
   }
 
-  async dblclick(selector: string, options?: { pierceShadowDom?: boolean; timeoutMs?: number }) {
+  async dblclick(selector: string, options?: { timeoutMs?: number }) {
     return this.mainFrame().dblclick(selector, options);
   }
 
-  async type(selector: string, text: string, options?: { pierceShadowDom?: boolean; timeoutMs?: number }) {
+  async type(selector: string, text: string, options?: { timeoutMs?: number }) {
     return this.mainFrame().type(selector, text, options);
   }
 
-  async typeSecure(selector: string, text: string, options?: { pierceShadowDom?: boolean; timeoutMs?: number }) {
+  async typeSecure(selector: string, text: string, options?: { timeoutMs?: number }) {
     return this.mainFrame().typeSecure(selector, text, options);
   }
 
@@ -133,12 +133,12 @@ export class Page {
     return this.mainFrame().evaluate(fnOrString, ...args);
   }
 
-  async textSecure(selector: string, options?: { pierceShadowDom?: boolean }) {
-    return this.mainFrame().textSecure(selector, options);
+  async textSecure(selector: string) {
+    return this.mainFrame().textSecure(selector);
   }
 
-  async valueSecure(selector: string, options?: { pierceShadowDom?: boolean }) {
-    return this.mainFrame().valueSecure(selector, options);
+  async valueSecure(selector: string) {
+    return this.mainFrame().valueSecure(selector);
   }
 
   async screenshot(options: ScreenshotOptions = {}) {

@@ -1,8 +1,6 @@
 import type { Frame } from "./Frame.js";
 
-export type LocatorOptions = {
-  pierceShadowDom?: boolean;
-};
+export type LocatorOptions = {};
 
 export class Locator {
   private frame: Frame;

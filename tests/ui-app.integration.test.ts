@@ -74,8 +74,8 @@ describe("ui app integration", () => {
     await page.dblclick("#place-order");
     await automatonExpect(page).element("#order-status").toHaveText("Status: placed for jane@example.com");
 
-    await page.click("#shadow-button", { pierceShadowDom: true });
-    await automatonExpect(page).element("#shadow-output", { pierceShadowDom: true }).toHaveText("Shadow: clicked");
+    await page.click("shadow-host >>> #shadow-button");
+    await automatonExpect(page).element("shadow-host >>> #shadow-output").toHaveText("Shadow: clicked");
 
     await page.evaluate(() => {
       const input = document.createElement("input");
