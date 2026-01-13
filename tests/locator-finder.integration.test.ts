@@ -18,7 +18,7 @@ describe("locator finder", () => {
     let browser;
     try {
       browser = await chromium.launch({
-        headless: true,
+        headless: false,
         args: process.platform === "linux" ? ["--no-sandbox", "--no-zygote", "--disable-dev-shm-usage"] : []
       });
       const page = await browser.newPage();

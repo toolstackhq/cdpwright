@@ -357,9 +357,30 @@ export class Frame {
     if (this.contextId) {
       params.contextId = this.contextId;
     }
-    const result = await this.session.send<{ result: { value?: any[] } }>("Runtime.evaluate", params);
+    let result = await this.session.send<{ result: { value?: any[] } }>("Runtime.evaluate", params);
     const duration = Date.now() - start;
     this.events.emit("action:end", { name: "findLocators", frameId: this.id, durationMs: duration });
+    const value = (result.result?.value as any[]) ?? [];
+    if (Array.isArray(value) && value.length > 0) {
+      return value;
+    }
+    // Fallback: very simple scan to avoid empty results
+    result = await this.session.send<{ result: { value?: any[] } }>("Runtime.evaluate", {
+      expression: `(function() {
+        return Array.from(document.querySelectorAll("*")).slice(0, 200).map((el, idx) => ({
+          name: el.getAttribute("aria-label") || el.getAttribute("name") || el.getAttribute("data-testid") || el.id || el.tagName.toLowerCase() + "-" + idx,
+          css: el.id ? "#" + el.id : el.getAttribute("data-testid") ? "[data-testid=\\"" + el.getAttribute("data-testid") + "\\"]" : el.tagName.toLowerCase(),
+          xpath: "",
+          quality: "low",
+          reason: "fallback",
+          visible: true,
+          tag: el.tagName.toLowerCase(),
+          type: el.getAttribute("type") || "",
+          role: el.getAttribute("role") || ""
+        }));
+      })()`,
+      returnByValue: true
+    });
     return (result.result?.value as any[]) ?? [];
   }
 
