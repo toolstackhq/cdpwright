@@ -81,13 +81,7 @@ describe("visa wizard integration", () => {
       await page.type("#input-email", "bad-email");
       await page.click("#next");
       await page.expect('[data-testid="fld-email-error"]').toHaveText("Enter a valid email.");
-      await page.evaluate(() => {
-        const email = document.querySelector("#input-email");
-        if (email instanceof HTMLInputElement) {
-          email.value = "";
-          email.dispatchEvent(new Event("input", { bubbles: true }));
-        }
-      });
+      await page.fillInput("#input-email", "");
       await page.type("#input-email", "ava.patel@example.com");
       await page.type("#input-mobile", "+61 412 555 111");
       await page.type("#input-altPhone", "+61 412 555 222");
