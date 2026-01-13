@@ -300,3 +300,19 @@ export function expect(page: Page) {
     }
   };
 }
+
+// Convenience: page.expect().element("selector") or page.expect("selector").toExist()
+declare module "../core/Page.js" {
+  interface Page {
+    expect(selector?: string, options?: ExpectSelectorOptions): ReturnType<typeof expect> | ElementExpectation;
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(Page.prototype as any).expect = function(selector?: string, options?: ExpectSelectorOptions) {
+  const builder = expect(this as Page);
+  if (selector) {
+    return builder.element(selector, options);
+  }
+  return builder;
+};
