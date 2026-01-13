@@ -98,9 +98,11 @@ export class Frame {
 
   async type(selector: string, text: string, options: TypeOptions = {}) {
     const start = Date.now();
+    const parsed = parseSelector(selector);
+    const pierce = Boolean(options.pierceShadowDom || parsed.pierceShadowDom);
     this.events.emit("action:start", { name: "type", selector, frameId: this.id, sensitive: options.sensitive });
     await waitFor(async () => {
-      const box = await this.resolveElementBox(selector, options);
+      const box = await this.resolveElementBox(selector, { ...options, pierceShadowDom: pierce });
       if (!box || !box.visible) {
         return false;
       }
@@ -112,7 +114,7 @@ export class Frame {
       const querySelectorDeep = ${helpers.querySelectorDeep};
       const root = document;
       const selector = ${JSON.stringify(selector)};
-      const el = ${options.pierceShadowDom ? "querySelectorDeep(root, selector)" : "root.querySelector(selector)"};
+      const el = ${pierce ? "querySelectorDeep(root, selector)" : "root.querySelector(selector)"};
       if (!el) {
         return;
       }
