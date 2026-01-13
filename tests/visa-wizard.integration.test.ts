@@ -8,27 +8,7 @@ const testFn = runIntegration ? it : it.skip;
 
 const appPath = path.resolve(process.cwd(), "index.html");
 
-async function selectValue(page: any, selector: string, value: string) {
-  await page.evaluate((sel, val) => {
-    const el = document.querySelector(sel);
-    if (el instanceof HTMLSelectElement) {
-      el.value = val;
-      el.dispatchEvent(new Event("change", { bubbles: true }));
-    }
-  }, selector, value);
-}
 
-async function setFileInput(page: any, selector: string, filename: string, contents: string) {
-  await page.evaluate((sel, name, text) => {
-    const input = document.querySelector(sel);
-    if (!(input instanceof HTMLInputElement)) return;
-    const file = new File([text], name, { type: "text/plain" });
-    const data = new DataTransfer();
-    data.items.add(file);
-    input.files = data.files;
-    input.dispatchEvent(new Event("change", { bubbles: true }));
-  }, selector, filename, contents);
-}
 
 async function waitForStep(page: any, stepId: string) {
   await page.expect(`[data-testid="step-${stepId}"]`).toBeVisible();
@@ -70,7 +50,7 @@ describe("visa wizard integration", () => {
       await page.click("#settings-gear");
 
       await page.click('[data-testid="fld-visaStream-0"]');
-      await selectValue(page, '[data-testid="fld-visitPurpose"]', "Work and contribute");
+      await page.selectOption('[data-testid="fld-visitPurpose"]', "Work and contribute");
       await page.click('[data-testid="fld-eligibilityConfirm"]');
       await page.click('[data-testid="fld-portalUpdates"]');
       await page.click("#fld-eligibilityAccordion-toggle-0");
@@ -85,21 +65,21 @@ describe("visa wizard integration", () => {
       await page.type("#input-middleName", "Rose");
       await page.type("#input-lastName", "Patel");
       await page.type("#input-dob", "1992-06-18");
-      await selectValue(page, '[data-testid="fld-gender"]', "Other");
+      await page.selectOption('[data-testid="fld-gender"]', "Other");
       await page.type("#input-genderOther", "Non-binary");
 
       await nextStep(page, "citizenship-residency");
-      await selectValue(page, '[data-testid="fld-citizenship"]', "India");
-      await selectValue(page, '[data-testid="fld-residencyStatus"]', "Temporary resident");
+      await page.selectOption('[data-testid="fld-citizenship"]', "India");
+      await page.selectOption('[data-testid="fld-residencyStatus"]', "Temporary resident");
       await page.type("#input-passportNumber", "P1234567");
       await page.type("#input-passportExpiry", "2029-04-30");
       await page.click('[data-testid="fld-dualCitizen"]');
 
       await nextStep(page, "passport-identity");
       await page.type("#input-passportIssuePlace", "Mumbai");
-      await selectValue(page, '[data-testid="fld-passportIssueCountry"]', "India");
+      await page.selectOption('[data-testid="fld-passportIssueCountry"]', "India");
       await page.type("#input-passportIssueDate", "2019-05-20");
-      await setFileInput(page, '[data-testid="fld-passportUpload"]', "passport.txt", "passport data");
+      await page.setFileInput('[data-testid="fld-passportUpload"]', "passport.txt", "passport data");
       await page.expect('[data-testid="fld-passportUpload-progress-bar"]').toHaveAttribute("style", /100%/);
       await page.type("#input-nationalId", "IND-789456");
 
@@ -124,7 +104,7 @@ describe("visa wizard integration", () => {
       await page.type("#input-addressLine1", "88 Harbour Street");
       await page.type("#input-addressLine2", "Unit 10");
       await page.type("#input-city", "Sydney");
-      await selectValue(page, '[data-testid="fld-state"]', "New South Wales");
+      await page.selectOption('[data-testid="fld-state"]', "New South Wales");
       await page.type("#input-postcode", "2000");
       await page.click('[data-testid="fld-postalSame"]');
       await page.expect('[data-testid="fld-postalSame"]').toBeChecked();
@@ -138,7 +118,7 @@ describe("visa wizard integration", () => {
       await page.type("#input-addressHistory-0-country", "Australia");
 
       await nextStep(page, "employment-details");
-      await selectValue(page, '[data-testid="fld-employmentStatus"]', "Employed");
+      await page.selectOption('[data-testid="fld-employmentStatus"]', "Employed");
       await page.type("#input-employer", "Southern Tech" );
       await page.type("#input-occupation", "Software developer");
       await page.type("#input-occupationList", "Software");
@@ -148,7 +128,7 @@ describe("visa wizard integration", () => {
       await page.click('[data-testid="fld-industryAreas-4"]');
 
       await nextStep(page, "education");
-      await selectValue(page, '[data-testid="fld-highestQualification"]', "Bachelor degree");
+      await page.selectOption('[data-testid="fld-highestQualification"]', "Bachelor degree");
       await page.type("#input-institution", "University of Sydney");
       await page.type("#input-gradYear", "2014");
       await page.type("#input-educationNotes", "Completed additional DevOps training.");
@@ -164,7 +144,7 @@ describe("visa wizard integration", () => {
       await page.click('[data-testid="fld-maritalStatus-1"]');
       await page.type("#input-spouseName", "Chris Patel");
       await page.type("#input-spouseDob", "1990-03-12");
-      await selectValue(page, '[data-testid="fld-spouseCitizenship"]', "Australia");
+      await page.selectOption('[data-testid="fld-spouseCitizenship"]', "Australia");
 
       await nextStep(page, "dependants");
       await page.click('[data-testid="fld-hasDependants-0"]');
@@ -192,8 +172,8 @@ describe("visa wizard integration", () => {
       await page.type("#input-previousVisaOutcome", "Granted and complied with conditions.");
 
       await nextStep(page, "supporting-documents");
-      await setFileInput(page, '[data-testid="fld-resumeUpload"]', "resume.txt", "resume content");
-      await setFileInput(page, '[data-testid="fld-policeCheckUpload"]', "police.txt", "police check");
+      await page.setFileInput('[data-testid="fld-resumeUpload"]', "resume.txt", "resume content");
+      await page.setFileInput('[data-testid="fld-policeCheckUpload"]', "police.txt", "police check");
       await page.click('[data-testid="fld-docsConfirm"]');
 
       await nextStep(page, "emergency-contact");
@@ -226,7 +206,7 @@ describe("visa wizard integration", () => {
       await nextStep(page, "declarations-consent");
       await page.click('[data-testid="fld-declarationTrue"]');
       await page.click('[data-testid="fld-consentUpdates"]');
-      await selectValue(page, '[data-testid="fld-contactPreference"]', "Email");
+      await page.selectOption('[data-testid="fld-contactPreference"]', "Email");
 
       await nextStep(page, "payment");
       await page.type("#input-cardName", "Ava Patel");

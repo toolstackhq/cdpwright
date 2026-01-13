@@ -141,6 +141,14 @@ export class Page {
     return this.mainFrame().valueSecure(selector);
   }
 
+  async selectOption(selector: string, value: string) {
+    return this.mainFrame().selectOption(selector, value);
+  }
+
+  async setFileInput(selector: string, name: string, contents: string, options: { mimeType?: string } = {}) {
+    return this.mainFrame().setFileInput(selector, name, contents, options);
+  }
+
   async screenshot(options: ScreenshotOptions = {}) {
     const start = Date.now();
     this.events.emit("action:start", { name: "screenshot", frameId: this.mainFrameId });

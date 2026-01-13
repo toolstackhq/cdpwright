@@ -181,6 +181,41 @@ export class Frame {
     return result;
   }
 
+  async selectOption(selector: string, value: string) {
+    await this.evaluate(
+      (sel, val) => {
+        const el = document.querySelector(sel);
+        if (!(el instanceof HTMLSelectElement)) return false;
+        el.value = val;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+      },
+      selector,
+      value
+    );
+  }
+
+  async setFileInput(selector: string, name: string, contents: string, options: { mimeType?: string } = {}) {
+    await this.evaluate(
+      (sel, fileName, text, mime) => {
+        const input = document.querySelector(sel);
+        if (!(input instanceof HTMLInputElement)) return false;
+        const file = new File([text], fileName, { type: mime || "text/plain" });
+        const data = new DataTransfer();
+        data.items.add(file);
+        input.files = data.files;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+      },
+      selector,
+      name,
+      contents,
+      options.mimeType || "text/plain"
+    );
+  }
+
   async attribute(selector: string, name: string, options: FrameSelectorOptions = {}) {
     return this.evalOnSelector<string | null>(selector, options, false, `
       if (!el || !(el instanceof Element)) {
