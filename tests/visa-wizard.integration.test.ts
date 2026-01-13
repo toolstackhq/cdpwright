@@ -33,7 +33,7 @@ describe("visa wizard integration", () => {
       });
       const page = await browser.newPage();
 
-      await page.goto(pathToFileURL(appPath).toString(), { allowFileUrl: true, waitUntil: "load" });
+      await page.goto(pathToFileURL(appPath).toString(), { allowFileUrl: true, waitUntil: "load"});
       await waitForStep(page, "start-eligibility");
 
       await page.click("#settings-gear");
