@@ -15,7 +15,7 @@ You are updating the VitePress docs for Chromium Automaton. Keep docs accurate a
 2. Update docs pages:
    - docs/index.md (high-level summary + quick example)
    - docs/guide/getting-started.md
-   - docs/guide/api.md
+  - docs/guide/api/index.md
    - docs/guide/cli.md
    - docs/guide/assertions.md
    - docs/guide/shadow-dom.md
