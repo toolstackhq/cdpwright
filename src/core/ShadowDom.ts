@@ -2,15 +2,16 @@ function walkAndCollect(node: Document | ShadowRoot | Element, selector: string,
   if (node instanceof Element && node.matches(selector)) {
     results.push(node);
   }
+  // Always consider the current node's shadow root, even if it has no light DOM children.
+  if (node instanceof Element && node.shadowRoot) {
+    walkAndCollect(node.shadowRoot, selector, results);
+  }
   const children: Element[] = [];
   if ("children" in node) {
     children.push(...Array.from((node as Element | Document | ShadowRoot).children));
   }
   for (const child of children) {
     walkAndCollect(child, selector, results);
-    if (child.shadowRoot) {
-      walkAndCollect(child.shadowRoot, selector, results);
-    }
   }
 }
 
