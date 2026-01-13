@@ -40,13 +40,7 @@ describe("visa wizard integration", () => {
       await page.expect('[data-testid="settings-panel"]').toBeVisible();
       await page.click("#deterministic-toggle");
       await page.expect("#deterministic-toggle").toBeChecked();
-      await page.evaluate(() => {
-        const seed = document.querySelector("#deterministic-seed");
-        if (seed instanceof HTMLInputElement) {
-          seed.value = "42";
-          seed.dispatchEvent(new Event("input", { bubbles: true }));
-        }
-      });
+      await page.fillInput("#deterministic-seed", "42");
       await page.click("#settings-gear");
 
       await page.click('[data-testid="fld-visaStream-0"]');
