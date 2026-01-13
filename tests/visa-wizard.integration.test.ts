@@ -46,6 +46,7 @@ describe("visa wizard integration", () => {
     try {
       browser = await chromium.launch({
         headless: false,
+        maximize: true,
         args: process.platform === "linux"
           ? ["--no-sandbox", "--no-zygote", "--disable-dev-shm-usage"]
           : []

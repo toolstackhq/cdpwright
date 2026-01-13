@@ -7,15 +7,13 @@ export default defineConfig({
   themeConfig: {
     nav: [
       { text: "Guide", link: "/guide/intro" },
-      { text: "API", link: "/guide/api" },
-      { text: "CLI", link: "/guide/cli" }
+      { text: "API", link: "/guide/api" }
     ],
     sidebar: {
       "/guide/": [
         { text: "Introduction", link: "/guide/intro" },
         { text: "Getting Started", link: "/guide/getting-started" },
         { text: "API", link: "/guide/api" },
-        { text: "CLI", link: "/guide/cli" },
         { text: "Assertions", link: "/guide/assertions" },
         { text: "Shadow DOM", link: "/guide/shadow-dom" },
         { text: "Frames", link: "/guide/frames" },

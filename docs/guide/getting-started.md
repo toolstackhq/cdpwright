@@ -6,13 +6,6 @@
 npm install @quitecode/chromium-automaton
 ```
 
-## Download Chromium
-
-```bash
-npx chromium-automaton download
-npx chromium-automaton download --latest
-```
-
 ## Launch and navigate
 
 Create a quick script (e.g. `index.js`) and run it with `node index.js`:

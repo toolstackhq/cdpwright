@@ -4,7 +4,6 @@ Chromium Automaton is a lightweight, Chromium-only automation library built dire
 
 ## Goals
 - Small API surface
-- Deterministic Chromium download and cache
 - Direct CDP usage for speed and transparency
 
 ## Non-goals

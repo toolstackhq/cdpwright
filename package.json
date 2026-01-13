@@ -3,9 +3,6 @@
   "version": "0.1.0-beta.1",
   "description": "Lightweight Chromium-only browser automation library using CDP",
   "type": "module",
-  "bin": {
-    "chromium-automaton": "dist/cli.js"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
