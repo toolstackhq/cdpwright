@@ -1,3 +1,4 @@
+import fs from "fs";
 import { Session } from "../cdp/Session.js";
 import { Logger } from "../logging/Logger.js";
 import { AutomationEvents } from "./Events.js";
@@ -188,7 +189,7 @@ export class Frame {
     this.logger.debug("FillInput", selector, `${duration}ms`);
   }
 
-  async findLocators(options: { highlight?: boolean } = {}) {
+  async findLocators(options: { highlight?: boolean; outputPath?: string } = {}) {
     const start = Date.now();
     this.events.emit("action:start", { name: "findLocators", frameId: this.id });
     const expression = `(function() {
@@ -363,6 +364,14 @@ export class Frame {
     const value = (result.result?.value as any[]) ?? [];
     if (Array.isArray(value) && value.length > 0) {
       this.logger.info("FindLocators", `${value.length} candidates`, value.slice(0, 5).map((v) => v.css || v.name || v.tag));
+      if (options.outputPath) {
+        try {
+          fs.writeFileSync(options.outputPath, JSON.stringify(value, null, 2), "utf-8");
+          this.logger.info("FindLocators", `written to ${options.outputPath}`);
+        } catch (err) {
+          this.logger.warn("FindLocators write failed", err);
+        }
+      }
       return value;
     }
     // Fallback: very simple scan to avoid empty results
@@ -384,6 +393,14 @@ export class Frame {
     });
     const fallback = (result.result?.value as any[]) ?? [];
     this.logger.info("FindLocators", `${fallback.length} candidates`, fallback.slice(0, 5).map((v) => v.css || v.name || v.tag));
+    if (options.outputPath) {
+      try {
+        fs.writeFileSync(options.outputPath, JSON.stringify(fallback, null, 2), "utf-8");
+        this.logger.info("FindLocators", `written to ${options.outputPath}`);
+      } catch (err) {
+        this.logger.warn("FindLocators write failed", err);
+      }
+    }
     return fallback;
   }
 
