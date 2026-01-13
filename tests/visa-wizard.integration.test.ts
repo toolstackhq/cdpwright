@@ -221,14 +221,15 @@ describe("visa wizard integration", () => {
 
       await nextStep(page, "payment");
       await page.type("#input-cardName", "Ava Patel");
-      await page.type("#input-cardNumber", "4242424242424242");
-      await page.type("#input-cardExpiry", "12/28");
-      await page.type("#input-cardCvv", "123");
-      await page.click("#pay-now");
-      await page.expect('[data-testid="toast"]').toHaveText("Payment successful");
+    await page.type("#input-cardNumber", "4242424242424242");
+    await page.type("#input-cardExpiry", "12/28");
+    await page.type("#input-cardCvv", "123");
+    await page.click("#pay-now");
+    await page.expect('[data-testid="toast"]').toHaveText("Payment successful");
+    await page.expect('[data-testid="toast"]').toBeHidden();
 
-      await nextStep(page, "final-review");
-      await page.expect('[data-testid="summary-table"]').toContainText("Ava Patel");
+    await nextStep(page, "final-review");
+    await page.expect('[data-testid="summary-table"]').toContainText("Ava Patel");
 
       await page.click("#next");
       await page.expect('[data-testid="submission-screen"]').toBeVisible();
