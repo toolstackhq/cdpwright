@@ -139,23 +139,31 @@ export class Frame {
 
   async fillInput(selector: string, value: string, options: { timeoutMs?: number } = {}) {
     const start = Date.now();
-    const parsed = parseSelector(selector);
-    const pierce = Boolean(parsed.pierceShadowDom);
-    const isXPath = parsed.isXPath;
     this.events.emit("action:start", { name: "fillInput", selector, frameId: this.id });
-    const helpers = serializeShadowDomHelpers();
     await waitFor(async () => {
       const expression = `(function() {
-        const querySelectorDeep = ${helpers.querySelectorDeep};
         const selector = ${JSON.stringify(selector)};
-        const find = () => {
-          if (${isXPath ? "true" : "false"}) {
-            const result = document.evaluate(selector, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null);
-            return result.singleNodeValue;
+        const findDeep = (sel) => {
+          if (sel.includes(">>>")) {
+            const parts = sel.split(">>>").map((s) => s.trim()).filter(Boolean);
+            let scope = [document];
+            for (const part of parts) {
+              const next = [];
+              for (const node of scope) {
+                const roots = [node];
+                if (node instanceof Element && node.shadowRoot) roots.push(node.shadowRoot);
+                for (const root of roots) {
+                  next.push(...root.querySelectorAll(part));
+                }
+              }
+              if (!next.length) return null;
+              scope = next;
+            }
+            return scope[0] || null;
           }
-          return ${pierce ? "querySelectorDeep(document, selector)" : "document.querySelector(selector)"};
+          return document.querySelector(sel);
         };
-        const el = find();
+        const el = findDeep(selector);
         if (!el) return false;
         if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement)) {
           return false;
