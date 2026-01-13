@@ -301,10 +301,13 @@ export function expect(page: Page) {
   };
 }
 
+export type { ElementExpectation, ExpectFrame };
+
 // Convenience: page.expect().element("selector") or page.expect("selector").toExist()
 declare module "../core/Page.js" {
   interface Page {
-    expect(selector?: string, options?: ExpectSelectorOptions): ReturnType<typeof expect> | ElementExpectation;
+    expect(): ReturnType<typeof expect>;
+    expect(selector: string, options?: ExpectSelectorOptions): ElementExpectation;
   }
 }
 
