@@ -1,133 +1,12 @@
 [
   {
-    "name": "html-0",
-    "css": "html",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "html",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "head-1",
-    "css": "head",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "head",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "meta-2",
-    "css": "meta",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "meta",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "viewport",
-    "css": "meta",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "meta",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "title-4",
-    "css": "title",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "title",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "link-5",
-    "css": "link",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "link",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "body-6",
-    "css": "body",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "body",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "app-root",
-    "css": "#app",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "div-8",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "div-9",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "h1-10",
+    "name": "h1-0",
     "css": "h1",
     "xpath": "",
     "quality": "low",
     "reason": "fallback",
     "visible": true,
     "tag": "h1",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "p-11",
-    "css": "p",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "p",
     "type": "",
     "role": ""
   },
@@ -143,145 +22,13 @@
     "role": ""
   },
   {
-    "name": "div-13",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "div-14",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "progress-text",
-    "css": "[data-testid=\"progress-text\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "span",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "progress-percent",
-    "css": "[data-testid=\"progress-percent\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "span",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "div-17",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "progress-bar",
-    "css": "[data-testid=\"progress-bar\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "span",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "session-countdown",
-    "css": "[data-testid=\"session-countdown\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "step-start-eligibility",
-    "css": "[data-testid=\"step-start-eligibility\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "h2-21",
+    "name": "h2-2",
     "css": "h2",
     "xpath": "",
     "quality": "low",
     "reason": "fallback",
     "visible": true,
     "tag": "h2",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "p-22",
-    "css": "p",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "p",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "div-23",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "fld-info-1-wrap",
-    "css": "[data-testid=\"fld-info-1-wrap\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "fld-visaStream-wrap",
-    "css": "[data-testid=\"fld-visaStream-wrap\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
     "type": "",
     "role": ""
   },
@@ -297,7 +44,7 @@
     "role": ""
   },
   {
-    "name": "legend-27",
+    "name": "legend-4",
     "css": "legend",
     "xpath": "",
     "quality": "low",
@@ -308,18 +55,7 @@
     "role": ""
   },
   {
-    "name": "div-28",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "label-29",
+    "name": "label-5",
     "css": "label",
     "xpath": "",
     "quality": "low",
@@ -341,7 +77,7 @@
     "role": ""
   },
   {
-    "name": "label-31",
+    "name": "label-7",
     "css": "label",
     "xpath": "",
     "quality": "low",
@@ -363,7 +99,7 @@
     "role": ""
   },
   {
-    "name": "label-33",
+    "name": "label-9",
     "css": "label",
     "xpath": "",
     "quality": "low",
@@ -385,7 +121,7 @@
     "role": ""
   },
   {
-    "name": "label-35",
+    "name": "label-11",
     "css": "label",
     "xpath": "",
     "quality": "low",
@@ -407,18 +143,7 @@
     "role": ""
   },
   {
-    "name": "fld-visitPurpose-wrap",
-    "css": "[data-testid=\"fld-visitPurpose-wrap\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "label-38",
+    "name": "label-13",
     "css": "label",
     "xpath": "",
     "quality": "low",
@@ -440,73 +165,7 @@
     "role": ""
   },
   {
-    "name": "option-40",
-    "css": "option",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "option",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "option-41",
-    "css": "option",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "option",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "option-42",
-    "css": "option",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "option",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "option-43",
-    "css": "option",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "option",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "option-44",
-    "css": "option",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "option",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "fld-eligibilityConfirm-wrap",
-    "css": "[data-testid=\"fld-eligibilityConfirm-wrap\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "label-46",
+    "name": "label-15",
     "css": "label",
     "xpath": "",
     "quality": "low",
@@ -528,28 +187,6 @@
     "role": ""
   },
   {
-    "name": "fld-portalUpdates-wrap",
-    "css": "[data-testid=\"fld-portalUpdates-wrap\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "div-49",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
     "name": "fld-portalUpdates",
     "css": "#input-portalUpdates",
     "xpath": "",
@@ -561,7 +198,7 @@
     "role": "switch"
   },
   {
-    "name": "label-51",
+    "name": "label-18",
     "css": "label",
     "xpath": "",
     "quality": "low",
@@ -572,35 +209,13 @@
     "role": ""
   },
   {
-    "name": "fld-eligibilityAccordion-wrap",
-    "css": "[data-testid=\"fld-eligibilityAccordion-wrap\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "label-53",
+    "name": "label-19",
     "css": "label",
     "xpath": "",
     "quality": "low",
     "reason": "fallback",
     "visible": true,
     "tag": "label",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "fld-eligibilityAccordion-section-0",
-    "css": "[data-testid=\"fld-eligibilityAccordion-section-0\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
     "type": "",
     "role": ""
   },
@@ -616,17 +231,6 @@
     "role": ""
   },
   {
-    "name": "fld-eligibilityAccordion-section-1",
-    "css": "[data-testid=\"fld-eligibilityAccordion-section-1\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
     "name": "fld-eligibilityAccordion-toggle-1",
     "css": "#fld-eligibilityAccordion-toggle-1",
     "xpath": "",
@@ -638,17 +242,6 @@
     "role": ""
   },
   {
-    "name": "div-58",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
     "name": "back",
     "css": "#back",
     "xpath": "",
@@ -656,17 +249,6 @@
     "reason": "fallback",
     "visible": true,
     "tag": "button",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "div-60",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
     "type": "",
     "role": ""
   },
@@ -700,50 +282,6 @@
     "reason": "fallback",
     "visible": true,
     "tag": "button",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "modal-root",
-    "css": "#modal-root",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "toast-root",
-    "css": "#toast-root",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "script-66",
-    "css": "script",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "script",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "script-67",
-    "css": "script",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "script",
     "type": "",
     "role": ""
   }

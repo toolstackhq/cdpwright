@@ -383,20 +383,33 @@ export class Frame {
       }
       return value;
     }
-    // Fallback: very simple scan to avoid empty results
+    // Fallback: filtered scan to avoid empty results while ignoring document chrome
     result = await this.session.send<{ result: { value?: any[] } }>("Runtime.evaluate", {
       expression: `(function() {
-        return Array.from(document.querySelectorAll("*")).slice(0, 200).map((el, idx) => ({
-          name: el.getAttribute("aria-label") || el.getAttribute("name") || el.getAttribute("data-testid") || el.id || el.tagName.toLowerCase() + "-" + idx,
-          css: el.id ? "#" + el.id : el.getAttribute("data-testid") ? "[data-testid=\\"" + el.getAttribute("data-testid") + "\\"]" : el.tagName.toLowerCase(),
-          xpath: "",
-          quality: "low",
-          reason: "fallback",
-          visible: true,
-          tag: el.tagName.toLowerCase(),
-          type: el.getAttribute("type") || "",
-          role: el.getAttribute("role") || ""
-        }));
+        const allowed = ["input","select","textarea","button","a","label","legend","fieldset","h1","h2","h3","h4","h5","h6"];
+        const skip = ["html","head","body","meta","link","script","style"];
+        return Array.from(document.querySelectorAll("*"))
+          .filter((el) => {
+            if (!(el instanceof HTMLElement)) return false;
+            const tag = el.tagName.toLowerCase();
+            if (skip.includes(tag)) return false;
+            if (tag === "a" && el.hasAttribute("href")) return true;
+            if (el.getAttribute("role") === "button") return true;
+            if (el.hasAttribute("contenteditable")) return true;
+            return allowed.includes(tag);
+          })
+          .slice(0, 200)
+          .map((el, idx) => ({
+            name: el.getAttribute("aria-label") || el.getAttribute("name") || el.getAttribute("data-testid") || el.id || el.tagName.toLowerCase() + "-" + idx,
+            css: el.id ? "#" + el.id : el.getAttribute("data-testid") ? "[data-testid=\\"" + el.getAttribute("data-testid") + "\\"]" : el.tagName.toLowerCase(),
+            xpath: "",
+            quality: "low",
+            reason: "fallback",
+            visible: true,
+            tag: el.tagName.toLowerCase(),
+            type: el.getAttribute("type") || "",
+            role: el.getAttribute("role") || ""
+          }));
       })()`,
       returnByValue: true
     });

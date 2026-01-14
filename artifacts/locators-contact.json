@@ -1,133 +1,12 @@
 [
   {
-    "name": "html-0",
-    "css": "html",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "html",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "head-1",
-    "css": "head",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "head",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "meta-2",
-    "css": "meta",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "meta",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "viewport",
-    "css": "meta",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "meta",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "title-4",
-    "css": "title",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "title",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "link-5",
-    "css": "link",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "link",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "body-6",
-    "css": "body",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "body",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "app-root",
-    "css": "#app",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "div-8",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "div-9",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "h1-10",
+    "name": "h1-0",
     "css": "h1",
     "xpath": "",
     "quality": "low",
     "reason": "fallback",
     "visible": true,
     "tag": "h1",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "p-11",
-    "css": "p",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "p",
     "type": "",
     "role": ""
   },
@@ -143,95 +22,7 @@
     "role": ""
   },
   {
-    "name": "div-13",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "div-14",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "progress-text",
-    "css": "[data-testid=\"progress-text\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "span",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "progress-percent",
-    "css": "[data-testid=\"progress-percent\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "span",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "div-17",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "progress-bar",
-    "css": "[data-testid=\"progress-bar\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "span",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "session-countdown",
-    "css": "[data-testid=\"session-countdown\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "step-contact-details",
-    "css": "[data-testid=\"step-contact-details\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "h2-21",
+    "name": "h2-2",
     "css": "h2",
     "xpath": "",
     "quality": "low",
@@ -242,40 +33,7 @@
     "role": ""
   },
   {
-    "name": "p-22",
-    "css": "p",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "p",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "div-23",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "fld-email-wrap",
-    "css": "[data-testid=\"fld-email-wrap\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "label-25",
+    "name": "label-3",
     "css": "label",
     "xpath": "",
     "quality": "low",
@@ -297,46 +55,13 @@
     "role": ""
   },
   {
-    "name": "fld-mobile-wrap",
-    "css": "[data-testid=\"fld-mobile-wrap\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "label-28",
+    "name": "label-5",
     "css": "label",
     "xpath": "",
     "quality": "low",
     "reason": "fallback",
     "visible": true,
     "tag": "label",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "fld-mobile-tooltip",
-    "css": "[data-testid=\"fld-mobile-tooltip\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "span",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "span-30",
-    "css": "span",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "span",
     "type": "",
     "role": ""
   },
@@ -352,18 +77,7 @@
     "role": ""
   },
   {
-    "name": "fld-altPhone-wrap",
-    "css": "[data-testid=\"fld-altPhone-wrap\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "label-33",
+    "name": "label-7",
     "css": "label",
     "xpath": "",
     "quality": "low",
@@ -385,18 +99,7 @@
     "role": ""
   },
   {
-    "name": "fld-preferredSuburb-wrap",
-    "css": "[data-testid=\"fld-preferredSuburb-wrap\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "label-36",
+    "name": "label-9",
     "css": "label",
     "xpath": "",
     "quality": "low",
@@ -418,28 +121,6 @@
     "role": ""
   },
   {
-    "name": "fld-preferredSuburb-help",
-    "css": "[data-testid=\"fld-preferredSuburb-help\"]",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "div-39",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
     "name": "back",
     "css": "#back",
     "xpath": "",
@@ -447,17 +128,6 @@
     "reason": "fallback",
     "visible": true,
     "tag": "button",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "div-41",
-    "css": "div",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
     "type": "",
     "role": ""
   },
@@ -491,50 +161,6 @@
     "reason": "fallback",
     "visible": true,
     "tag": "button",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "modal-root",
-    "css": "#modal-root",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "toast-root",
-    "css": "#toast-root",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "div",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "script-47",
-    "css": "script",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "script",
-    "type": "",
-    "role": ""
-  },
-  {
-    "name": "script-48",
-    "css": "script",
-    "xpath": "",
-    "quality": "low",
-    "reason": "fallback",
-    "visible": true,
-    "tag": "script",
     "type": "",
     "role": ""
   }
