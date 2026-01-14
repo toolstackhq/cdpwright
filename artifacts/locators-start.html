@@ -10,7 +10,8 @@
     th, td { border: 1px solid #e5e7eb; padding: 8px; font-size: 13px; text-align: left; }
     th { background: linear-gradient(180deg, #f6f7fb, #edf0f7); font-weight: 600; }
     tr:nth-child(every) { background: #fafbfc; }
-    .copy { color: #2563eb; text-decoration: underline; cursor: pointer; font-size: 12px; background: none; border: none; padding: 0; }
+    .copy { color: #2563eb; text-decoration: underline dotted; cursor: pointer; font-size: 12px; background: none; border: none; padding: 0; opacity: 0; transition: opacity 0.15s ease; }
+    tr:hover .copy { opacity: 1; }
     .copy:hover { color: #1d4ed8; }
     .loc-value { margin-left: 6px; font-family: ui-monospace, SFMono-Regular, SFMono, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
   </style>
