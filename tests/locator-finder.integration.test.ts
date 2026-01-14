@@ -28,9 +28,9 @@ describe("locator finder", () => {
       await waitForStep(page, "start-eligibility");
       const first = await page.find.locators({
         highlight: true,
-        outputPath: path.resolve(process.cwd(), "artifacts", "locators-start.json")
+        outputJson: "locators-start.json",
+        outputHtml: "locators-start.html"
       });
-      await page.screenshot({ path: path.resolve(process.cwd(), "artifacts", "locators-start.png") });
       expect(Array.isArray(first)).toBe(true);
       expect(first.length).toBeGreaterThan(0);
       expect(first.some((loc) => String(loc.css || "").includes("data-testid"))).toBe(true);
@@ -47,9 +47,9 @@ describe("locator finder", () => {
 
       const contact = await page.find.locators({
         highlight: false,
-        outputPath: path.resolve(process.cwd(), "artifacts", "locators-contact.json")
+        outputJson: "locators-contact.json",
+        outputHtml: "locators-contact.html"
       });
-      await page.screenshot({ path: path.resolve(process.cwd(), "artifacts", "locators-contact.png") });
       expect(contact.length).toBeGreaterThan(0);
       expect(contact.some((loc) => String(loc.name || "").toLowerCase().includes("email"))).toBe(true);
     } finally {

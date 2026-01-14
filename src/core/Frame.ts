@@ -1,4 +1,5 @@
 import fs from "fs";
+import path from "path";
 import { Session } from "../cdp/Session.js";
 import { Logger } from "../logging/Logger.js";
 import { AutomationEvents } from "./Events.js";
@@ -189,9 +190,22 @@ export class Frame {
     this.logger.debug("FillInput", selector, `${duration}ms`);
   }
 
-  async findLocators(options: { highlight?: boolean; outputPath?: string } = {}) {
+  async findLocators(options: { highlight?: boolean; outputPath?: string; outputJson?: string; outputHtml?: string } = {}) {
     const start = Date.now();
     this.events.emit("action:start", { name: "findLocators", frameId: this.id });
+    const artifactsDir = path.resolve(process.cwd(), "artifacts");
+    try {
+      fs.mkdirSync(artifactsDir, { recursive: true });
+    } catch {
+      // ignore dir creation errors
+    }
+    const resolveOut = (name?: string) => {
+      if (!name) return null;
+      const base = path.basename(name);
+      return path.join(artifactsDir, base);
+    };
+    const outputJson = resolveOut(options.outputJson || options.outputPath);
+    const outputHtml = resolveOut(options.outputHtml);
     const expression = `(function() {
       const highlight = ${options.highlight !== false};
       const previous = Array.from(document.querySelectorAll(".__ca-locator-overlay"));
@@ -373,13 +387,16 @@ export class Frame {
     const value = (result.result?.value as any[]) ?? [];
     if (Array.isArray(value) && value.length > 0) {
       this.logger.info("FindLocators", `${value.length} candidates`, value.slice(0, 5).map((v) => v.css || v.name || v.tag));
-      if (options.outputPath) {
+      if (outputJson) {
         try {
-          fs.writeFileSync(options.outputPath, JSON.stringify(value, null, 2), "utf-8");
-          this.logger.info("FindLocators", `written to ${options.outputPath}`);
+          fs.writeFileSync(outputJson, JSON.stringify(value, null, 2), "utf-8");
+          this.logger.info("FindLocators", `written to ${outputJson}`);
         } catch (err) {
           this.logger.warn("FindLocators write failed", err);
         }
+      }
+      if (outputHtml) {
+        this.writeLocatorHtml(outputHtml, value);
       }
       return value;
     }
@@ -415,15 +432,86 @@ export class Frame {
     });
     const fallback = (result.result?.value as any[]) ?? [];
     this.logger.info("FindLocators", `${fallback.length} candidates`, fallback.slice(0, 5).map((v) => v.css || v.name || v.tag));
-    if (options.outputPath) {
+    if (outputJson) {
       try {
-        fs.writeFileSync(options.outputPath, JSON.stringify(fallback, null, 2), "utf-8");
-        this.logger.info("FindLocators", `written to ${options.outputPath}`);
+        fs.writeFileSync(outputJson, JSON.stringify(fallback, null, 2), "utf-8");
+        this.logger.info("FindLocators", `written to ${outputJson}`);
       } catch (err) {
         this.logger.warn("FindLocators write failed", err);
       }
     }
+    if (outputHtml) {
+      this.writeLocatorHtml(outputHtml, fallback);
+    }
     return fallback;
+  }
+
+  private writeLocatorHtml(filePath: string, data: any[]) {
+    const html = `<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Locators</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 16px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background: #f5f5f5; }
+    button.copy { padding: 4px 8px; }
+  </style>
+</head>
+<body>
+  <h1>Locator candidates</h1>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Name</th><th>CSS</th><th>XPath</th><th>Quality</th><th>Reason</th><th>Visible</th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <script>
+    const data = ${JSON.stringify(data)};
+    const rows = document.getElementById("rows");
+    data.forEach((loc, idx) => {
+      const tr = document.createElement("tr");
+      const cells = [
+        idx,
+        loc.name || "",
+        loc.css || "",
+        loc.xpath || "",
+        loc.quality || "",
+        loc.reason || "",
+        String(loc.visible)
+      ];
+      cells.forEach((val, i) => {
+        const td = document.createElement("td");
+        if (i === 2 || i === 3) {
+          const btn = document.createElement("button");
+          btn.className = "copy";
+          btn.textContent = "Copy";
+          btn.addEventListener("click", async () => {
+            try { await navigator.clipboard.writeText(val); btn.textContent = "Copied"; setTimeout(() => btn.textContent = "Copy", 1000); }
+            catch { btn.textContent = "Error"; }
+          });
+          const span = document.createElement("span");
+          span.textContent = " " + val;
+          td.appendChild(btn);
+          td.appendChild(span);
+        } else {
+          td.textContent = val;
+        }
+        tr.appendChild(td);
+      });
+      rows.appendChild(tr);
+    });
+  </script>
+</body>
+</html>`;
+    try {
+      fs.writeFileSync(filePath, html, "utf-8");
+      this.logger.info("FindLocators", `HTML written to ${filePath}`);
+    } catch (err) {
+      this.logger.warn("FindLocators HTML write failed", err);
+    }
   }
 
   async exists(selector: string, options: FrameSelectorOptions = {}) {

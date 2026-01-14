@@ -308,9 +308,9 @@ declare module "../core/Page.js" {
     expect(): ReturnType<typeof expect>;
     expect(selector: string, options?: ExpectSelectorOptions): ElementExpectation;
     find: {
-      locators: (options?: { highlight?: boolean; outputPath?: string }) => Promise<any[]>;
+      locators: (options?: { highlight?: boolean; outputPath?: string; outputJson?: string; outputHtml?: string }) => Promise<any[]>;
     };
-    findLocators(options?: { highlight?: boolean; outputPath?: string }): Promise<any[]>;
+    findLocators(options?: { highlight?: boolean; outputPath?: string; outputJson?: string; outputHtml?: string }): Promise<any[]>;
   }
 }
 
