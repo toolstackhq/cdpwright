@@ -30,6 +30,7 @@ describe("locator finder", () => {
         highlight: true,
         outputPath: path.resolve(process.cwd(), "artifacts", "locators-start.json")
       });
+      await page.screenshot({ path: path.resolve(process.cwd(), "artifacts", "locators-start.png") });
       expect(Array.isArray(first)).toBe(true);
       expect(first.length).toBeGreaterThan(0);
       expect(first.some((loc) => String(loc.css || "").includes("data-testid"))).toBe(true);
@@ -48,6 +49,7 @@ describe("locator finder", () => {
         highlight: false,
         outputPath: path.resolve(process.cwd(), "artifacts", "locators-contact.json")
       });
+      await page.screenshot({ path: path.resolve(process.cwd(), "artifacts", "locators-contact.png") });
       expect(contact.length).toBeGreaterThan(0);
       expect(contact.some((loc) => String(loc.name || "").toLowerCase().includes("email"))).toBe(true);
     } finally {
