@@ -1,0 +1,59 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Locators</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 16px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background: #f5f5f5; }
+    button.copy { padding: 4px 8px; }
+  </style>
+</head>
+<body>
+  <h1>Locator candidates</h1>
+  <table>
+    <thead>
+      <tr><th>#</th><th>Name</th><th>CSS</th><th>XPath</th><th>Quality</th><th>Reason</th><th>Visible</th></tr>
+    </thead>
+    <tbody id="rows"></tbody>
+  </table>
+  <script>
+    const data = [{"name":"h1-0","css":"h1","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"h1","type":"","role":""},{"name":"Settings","css":"#settings-gear","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"button","type":"","role":""},{"name":"h2-2","css":"h2","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"h2","type":"","role":""},{"name":"fld-visaStream","css":"[data-testid=\"fld-visaStream\"]","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"fieldset","type":"","role":""},{"name":"legend-4","css":"legend","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"legend","type":"","role":""},{"name":"label-5","css":"label","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"label","type":"","role":""},{"name":"visaStream","css":"#input-visaStream-0","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"input","type":"radio","role":""},{"name":"label-7","css":"label","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"label","type":"","role":""},{"name":"visaStream","css":"#input-visaStream-1","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"input","type":"radio","role":""},{"name":"label-9","css":"label","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"label","type":"","role":""},{"name":"visaStream","css":"#input-visaStream-2","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"input","type":"radio","role":""},{"name":"label-11","css":"label","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"label","type":"","role":""},{"name":"visaStream","css":"#input-visaStream-3","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"input","type":"radio","role":""},{"name":"label-13","css":"label","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"label","type":"","role":""},{"name":"fld-visitPurpose","css":"#input-visitPurpose","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"select","type":"","role":""},{"name":"label-15","css":"label","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"label","type":"","role":""},{"name":"fld-eligibilityConfirm","css":"#input-eligibilityConfirm","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"input","type":"checkbox","role":""},{"name":"fld-portalUpdates","css":"#input-portalUpdates","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"input","type":"checkbox","role":"switch"},{"name":"label-18","css":"label","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"label","type":"","role":""},{"name":"label-19","css":"label","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"label","type":"","role":""},{"name":"fld-eligibilityAccordion-toggle-0","css":"#fld-eligibilityAccordion-toggle-0","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"button","type":"","role":""},{"name":"fld-eligibilityAccordion-toggle-1","css":"#fld-eligibilityAccordion-toggle-1","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"button","type":"","role":""},{"name":"back","css":"#back","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"button","type":"","role":""},{"name":"save-draft","css":"#save-draft","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"button","type":"","role":""},{"name":"help","css":"#help","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"button","type":"","role":""},{"name":"next","css":"#next","xpath":"","quality":"low","reason":"fallback","visible":true,"tag":"button","type":"","role":""}];
+    const rows = document.getElementById("rows");
+    data.forEach((loc, idx) => {
+      const tr = document.createElement("tr");
+      const cells = [
+        idx,
+        loc.name || "",
+        loc.css || "",
+        loc.xpath || "",
+        loc.quality || "",
+        loc.reason || "",
+        String(loc.visible)
+      ];
+      cells.forEach((val, i) => {
+        const td = document.createElement("td");
+        if (i === 2 || i === 3) {
+          const btn = document.createElement("button");
+          btn.className = "copy";
+          btn.textContent = "Copy";
+          btn.addEventListener("click", async () => {
+            try { await navigator.clipboard.writeText(val); btn.textContent = "Copied"; setTimeout(() => btn.textContent = "Copy", 1000); }
+            catch { btn.textContent = "Error"; }
+          });
+          const span = document.createElement("span");
+          span.textContent = " " + val;
+          td.appendChild(btn);
+          td.appendChild(span);
+        } else {
+          td.textContent = val;
+        }
+        tr.appendChild(td);
+      });
+      rows.appendChild(tr);
+    });
+  </script>
+</body>
+</html>
