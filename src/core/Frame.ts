@@ -302,10 +302,19 @@ export class Frame {
         };
       };
 
-      let nodes = Array.from(document.querySelectorAll("input, select, textarea, button, a[href], [role='button'], [contenteditable='true']"));
-      if (nodes.length === 0) {
-        nodes = Array.from(document.querySelectorAll("*")).filter((el) => el instanceof HTMLElement);
-      }
+        const preferredSelectors = ["input", "select", "textarea", "button", "a[href]", "[role='button']", "[contenteditable='true']", "h1", "h2", "h3", "h4", "h5", "h6", "label", "legend", "fieldset"];
+        let nodes = Array.from(document.querySelectorAll(preferredSelectors.join(", ")));
+        if (nodes.length === 0) {
+          nodes = Array.from(document.querySelectorAll("*")).filter((el) => {
+            if (!(el instanceof HTMLElement)) return false;
+            const tag = el.tagName.toLowerCase();
+            if (preferredSelectors.includes(tag)) return true;
+            if (tag === "a" && el.hasAttribute("href")) return true;
+            if (el.getAttribute("role") === "button") return true;
+            if (el.hasAttribute("contenteditable")) return true;
+            return false;
+          });
+        }
       const results = [];
       nodes.forEach((el) => {
         const isVisible = visible(el);
