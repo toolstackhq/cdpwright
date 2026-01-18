@@ -8,7 +8,9 @@ import { parseSelector } from "./Selectors.js";
 import { serializeShadowDomHelpers } from "./ShadowDom.js";
 import { Locator } from "./Locator.js";
 
-export type FrameSelectorOptions = {};
+export type FrameSelectorOptions = {
+  pierceShadowDom?: boolean;
+};
 
 export type ClickOptions = {
   timeoutMs?: number;
