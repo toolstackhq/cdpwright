@@ -10,6 +10,7 @@ import { Locator } from "./Locator.js";
 
 export type FrameSelectorOptions = {
   pierceShadowDom?: boolean;
+  timeoutMs?: number;
 };
 
 export type ClickOptions = {

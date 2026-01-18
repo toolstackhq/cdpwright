@@ -326,7 +326,8 @@ declare module "../core/Page.js" {
 Object.defineProperty(Page.prototype, "find", {
   get: function() {
     return {
-      locators: (options?: { highlight?: boolean }) => (this as Page).findLocators(options)
+      locators: (options?: { highlight?: boolean; outputPath?: string; outputJson?: string; outputHtml?: string }) =>
+        (this as Page).findLocators(options)
     };
   }
 });
