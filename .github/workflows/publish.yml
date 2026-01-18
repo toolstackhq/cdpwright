@@ -36,6 +36,17 @@ jobs:
             npm publish --access public
           fi
 
+      - name: Update dist-tags
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          if [[ "${GITHUB_REF_NAME}" == *"-beta"* ]]; then
+            npm dist-tag add @quitecode/chromium-automaton@${VERSION} beta
+          else
+            npm dist-tag add @quitecode/chromium-automaton@${VERSION} latest
+          fi
+
       - name: Create GitHub Release with notes
         uses: softprops/action-gh-release@v1
         with:
