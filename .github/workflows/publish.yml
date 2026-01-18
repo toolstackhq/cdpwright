@@ -9,7 +9,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,3 +35,11 @@ jobs:
           else
             npm publish --access public
           fi
+
+      - name: Create GitHub Release with notes
+        uses: softprops/action-gh-release@v1
+        with:
+          generate_release_notes: true
+          tag_name: ${{ github.ref_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
