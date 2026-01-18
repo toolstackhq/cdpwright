@@ -43,6 +43,15 @@ node quick.js
 - Queries: `query`, `queryAll`, `queryXPath`, `queryAllXPath`, `locator`
 - Assertions: `expect(page).element("selector").toBeVisible()` (see `docs/guide/assertions.md`)
 
+## Architecture at a glance (render-friendly)
+```
+CLI (chromium-automaton download) -> Downloader -> Chromium cache
+
+User code -> chromium.launch -> ChromiumManager -> Chromium process
+Chromium process -> CDP connection -> Browser -> Page -> Frame
+Page -> Locator / expect
+```
+
 ## Docs
 Full guide and API reference: https://quitecode9-lab.github.io/chromium-automation/ (built from `docs/` via VitePress). Start at `docs/guide/intro.md` or `docs/guide/api/`.
 
