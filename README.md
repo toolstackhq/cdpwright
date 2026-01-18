@@ -10,6 +10,7 @@ npx chromium-automaton download    # downloads a pinned Chromium build
 ```
 
 ```ts
+// quick.js
 import { chromium, expect } from "@quitecode/chromium-automaton";
 
 const browser = await chromium.launch({ headless: true });
@@ -19,6 +20,11 @@ await page.goto("https://example.com");
 await expect(page).element("h1").toHaveText(/Example Domain/);
 
 await browser.close();
+```
+
+Run it:
+```bash
+node quick.js
 ```
 
 ## Core ideas

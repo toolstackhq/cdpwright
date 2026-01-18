@@ -15,7 +15,11 @@ npx chromium-automaton download --latest
 
 ## Launch and navigate
 
-Create a quick script (e.g. `index.js`) and run it with `node index.js`:
+Create a quick script (e.g. `index.js`) and run it with:
+
+```bash
+node index.js
+```
 
 ```js
 import { chromium } from "@quitecode/chromium-automaton";
