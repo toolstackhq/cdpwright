@@ -20,6 +20,5 @@ jobs:
         run: npm run build
       - name: Unit tests
         run: npm run test
-      - name: Integration tests (disabled)
-        if: false
-        run: echo "Integration tests disabled"
+      - name: Integration smoke test
+        run: RUN_INTEGRATION=1 npx vitest run tests/integration.test.ts

@@ -20,7 +20,7 @@ export function attachAllure(browser: Browser, allure: AllureLike) {
     allure.startStep(label);
   });
 
-  browser.on("assertion:end", () => {
-    allure.endStep("passed");
+  browser.on("assertion:end", (event) => {
+    allure.endStep(event.status ?? "passed");
   });
 }

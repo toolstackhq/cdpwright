@@ -461,7 +461,7 @@ export class Frame {
     table { border-collapse: collapse; width: 100%; background: #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
     th, td { border: 1px solid #e5e7eb; padding: 8px; font-size: 13px; text-align: left; }
     th { background: linear-gradient(180deg, #f6f7fb, #edf0f7); font-weight: 600; }
-    tr:nth-child(every) { background: #fafbfc; }
+    tr:nth-child(even) { background: #fafbfc; }
     .copy { color: #2563eb; text-decoration: underline dotted; cursor: pointer; font-size: 12px; background: none; border: none; padding: 0; opacity: 0; transition: opacity 0.15s ease; }
     tr:hover .copy { opacity: 1; }
     .copy:hover { color: #1d4ed8; }
@@ -539,24 +539,12 @@ export class Frame {
   }
 
   async text(selector: string, options: FrameSelectorOptions = {}) {
-    const helpers = serializeShadowDomHelpers();
-    const expression = `(function() {
-      const querySelectorDeep = ${helpers.querySelectorDeep};
-      const root = document;
-      const selector = ${JSON.stringify(selector)};
-      const el = ${options.pierceShadowDom ? "querySelectorDeep(root, selector)" : "root.querySelector(selector)"};
-      return el ? el.textContent || \"\" : null;
-    })()`;
-
-    const params: Record<string, unknown> = {
-      expression,
-      returnByValue: true
-    };
-    if (this.contextId) {
-      params.contextId = this.contextId;
-    }
-    const result = await this.session.send<{ result: { value?: string | null } }>("Runtime.evaluate", params);
-    return result.result.value ?? null;
+    return this.evalOnSelector<string | null>(selector, options, false, `
+      if (!el) {
+        return null;
+      }
+      return el.textContent || "";
+    `);
   }
 
   async textSecure(selector: string, options: FrameSelectorOptions = {}) {
@@ -942,7 +930,7 @@ export class Frame {
 
   private buildElementExpression(selector: string, options: FrameSelectorOptions, forceXPath: boolean, body: string) {
     const parsed = forceXPath ? { type: "xpath", value: selector.trim(), pierceShadowDom: undefined } : parseSelector(selector);
-    const pierce = Boolean(parsed.pierceShadowDom);
+    const pierce = options.pierceShadowDom ?? Boolean(parsed.pierceShadowDom);
     const helpers = serializeShadowDomHelpers();
     if (parsed.type === "xpath") {
       return `(function() {

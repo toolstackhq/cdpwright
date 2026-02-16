@@ -13,7 +13,7 @@ describe("shadow dom resolver", () => {
     shadow.appendChild(inner);
     document.body.appendChild(host);
 
-    const found = querySelectorDeep(document, ".target");
+    const found = querySelectorDeep(document as unknown as Document, ".target");
     expect(found).toBe(inner);
   });
 
@@ -30,7 +30,7 @@ describe("shadow dom resolver", () => {
     shadow.appendChild(inner2);
     document.body.appendChild(host);
 
-    const found = querySelectorAllDeep(document, ".item");
+    const found = querySelectorAllDeep(document as unknown as Document, ".item");
     expect(found.length).toBe(2);
   });
 });

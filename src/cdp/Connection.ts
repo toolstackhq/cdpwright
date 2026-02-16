@@ -23,21 +23,44 @@ export class Connection {
   private sessions = new Map<string, Session>();
   private emitter = new EventEmitter();
   private logger: Logger;
+  private closed = false;
 
   constructor(url: string, logger: Logger) {
     this.logger = logger;
     this.ws = new WebSocket(url);
     this.ws.on("message", (data: WebSocket.RawData) => this.onMessage(data.toString()));
     this.ws.on("error", (err: Error) => this.onError(err));
+    this.ws.on("close", (code: number, reason: Buffer) => this.onClose(code, reason));
   }
 
   async waitForOpen() {
     if (this.ws.readyState === WebSocket.OPEN) {
       return;
     }
+    if (this.ws.readyState === WebSocket.CLOSED) {
+      throw new Error("CDP socket is closed");
+    }
     await new Promise<void>((resolve, reject) => {
-      this.ws.once("open", () => resolve());
-      this.ws.once("error", (err: Error) => reject(err));
+      const onOpen = () => {
+        cleanup();
+        resolve();
+      };
+      const onError = (err: Error) => {
+        cleanup();
+        reject(err);
+      };
+      const onClose = () => {
+        cleanup();
+        reject(new Error("CDP socket closed before opening"));
+      };
+      const cleanup = () => {
+        this.ws.off("open", onOpen);
+        this.ws.off("error", onError);
+        this.ws.off("close", onClose);
+      };
+      this.ws.on("open", onOpen);
+      this.ws.on("error", onError);
+      this.ws.on("close", onClose);
     });
   }
 
@@ -76,6 +99,9 @@ export class Connection {
     }
     await new Promise<void>((resolve) => {
       this.ws.once("close", () => resolve());
+      if (this.ws.readyState === WebSocket.CLOSING) {
+        return;
+      }
       this.ws.close();
     });
   }
@@ -84,8 +110,34 @@ export class Connection {
     this.logger.error("CDP socket error", err);
   }
 
+  private onClose(code: number, reason: Buffer) {
+    if (this.closed) {
+      return;
+    }
+    this.closed = true;
+    const reasonText = reason.toString() || "no reason";
+    this.failPending(new Error(`CDP socket closed (${code}): ${reasonText}`));
+    this.sessions.clear();
+  }
+
+  private failPending(error: Error) {
+    if (this.callbacks.size === 0) {
+      return;
+    }
+    for (const [, callback] of this.callbacks) {
+      callback.reject(error);
+    }
+    this.callbacks.clear();
+  }
+
   private onMessage(message: string) {
-    const parsed = JSON.parse(message) as CDPResponse & CDPEvent;
+    let parsed: CDPResponse & CDPEvent;
+    try {
+      parsed = JSON.parse(message) as CDPResponse & CDPEvent;
+    } catch (err) {
+      this.logger.warn("Failed to parse CDP message", err);
+      return;
+    }
     if (typeof parsed.id === "number") {
       const callback = this.callbacks.get(parsed.id);
       if (!callback) {

@@ -264,12 +264,12 @@ class ElementExpectation {
       }, { timeoutMs, description: message });
     } catch {
       const duration = Date.now() - start;
-      this.events.emit("assertion:end", { name: message, selector: this.selector, frameId: this.frame.id, durationMs: duration });
+      this.events.emit("assertion:end", { name: message, selector: this.selector, frameId: this.frame.id, durationMs: duration, status: "failed" });
       throw new AssertionError(message, { selector: this.selector, timeoutMs, lastState: { lastState, ...details } });
     }
 
     const duration = Date.now() - start;
-    this.events.emit("assertion:end", { name: message, selector: this.selector, frameId: this.frame.id, durationMs: duration });
+    this.events.emit("assertion:end", { name: message, selector: this.selector, frameId: this.frame.id, durationMs: duration, status: "passed" });
   }
 }
 

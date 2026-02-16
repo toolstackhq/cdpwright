@@ -8,7 +8,12 @@ const testFn = runIntegration ? it : it.skip;
 
 describe("integration", () => {
   testFn("launches chromium and navigates", async () => {
-    const browser = await chromium.launch({ headless: true });
+    const browser = await chromium.launch({
+      headless: true,
+      args: process.platform === "linux"
+        ? ["--no-sandbox", "--no-zygote", "--disable-dev-shm-usage"]
+        : []
+    });
     const page = await browser.newPage();
     await page.goto("https://example.com", { waitUntil: "load" });
     await automatonExpect(page).element("h1").toHaveText(/Example Domain/);

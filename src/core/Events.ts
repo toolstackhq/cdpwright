@@ -6,6 +6,7 @@ export type ActionEvent = {
   frameId?: string;
   durationMs?: number;
   sensitive?: boolean;
+  status?: "passed" | "failed";
 };
 
 export type AssertionEvent = {
@@ -13,6 +14,7 @@ export type AssertionEvent = {
   selector?: string;
   frameId?: string;
   durationMs?: number;
+  status?: "passed" | "failed";
 };
 
 export type AutomationEventMap = {

@@ -93,7 +93,12 @@ export class Page {
 
     this.events.emit("action:start", { name: "goto", selector: url, frameId: this.mainFrameId });
     const start = Date.now();
-    await this.session.send("Page.navigate", { url });
+    // Clear any stale lifecycle state from prior navigations before issuing a new navigate.
+    this.lifecycleEvents.clear();
+    const navigation = await this.session.send<{ errorText?: string }>("Page.navigate", { url });
+    if (navigation?.errorText) {
+      throw new Error(`Navigation failed: ${navigation.errorText}`);
+    }
     await this.waitForLifecycle(this.mainFrameId, lifecycleName, timeoutMs);
     const duration = Date.now() - start;
     this.events.emit("action:end", { name: "goto", selector: url, frameId: this.mainFrameId, durationMs: duration });

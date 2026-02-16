@@ -1,30 +1,40 @@
-function getElementCtor(root: Document | ShadowRoot | Element): typeof Element | null {
+type RootNode = Document | ShadowRoot | Element;
+
+function getElementCtor(root: RootNode): typeof Element | null {
   if (typeof Element !== "undefined") return Element;
   const doc = (root as Document | ShadowRoot | Element & { ownerDocument?: Document }).ownerDocument;
   const view = (doc || (root as any)).defaultView;
   return view?.Element ?? null;
 }
 
-export function querySelectorDeep(root: Document | ShadowRoot | Element, selector: string): Element | null {
+function isElementNode(node: RootNode, ElementCtor: typeof Element): node is Element {
+  return node instanceof ElementCtor;
+}
+
+function nodeChildren(node: RootNode): Element[] {
+  if (!("children" in node)) {
+    return [];
+  }
+  return Array.from(node.children as unknown as Iterable<Element>);
+}
+
+export function querySelectorDeep(root: RootNode, selector: string): Element | null {
   const ElementCtor = getElementCtor(root);
   if (!ElementCtor) return null;
-  function walk(node: Document | ShadowRoot | Element, sel: string, results: Element[]) {
-    if (node instanceof ElementCtor && (node as Element).matches(sel)) {
+  const elementCtor = ElementCtor;
+  function walk(node: RootNode, sel: string, results: Element[]) {
+    if (isElementNode(node, elementCtor) && node.matches(sel)) {
       results.push(node);
     }
-    if (node instanceof ElementCtor && (node as Element).shadowRoot) {
+    if (isElementNode(node, elementCtor) && node.shadowRoot) {
       walk(node.shadowRoot, sel, results);
     }
-    const children: Element[] = [];
-    if ("children" in node) {
-      children.push(...Array.from((node as Element | Document | ShadowRoot).children));
-    }
-    for (const child of children) {
+    for (const child of nodeChildren(node)) {
       walk(child, sel, results);
     }
   }
 
-  function findAll(rootNode: Document | ShadowRoot | Element, sel: string) {
+  function findAll(rootNode: RootNode, sel: string) {
     const results: Element[] = [];
     walk(rootNode, sel, results);
     return results;
@@ -32,7 +42,7 @@ export function querySelectorDeep(root: Document | ShadowRoot | Element, selecto
 
   if (selector.includes(">>>")) {
     const parts = selector.split(">>>").map((p) => p.trim()).filter(Boolean);
-    let scope: Array<Document | ShadowRoot | Element> = [root];
+    let scope: RootNode[] = [root];
     for (const part of parts) {
       const matches: Element[] = [];
       for (const item of scope) {
@@ -50,23 +60,20 @@ export function querySelectorDeep(root: Document | ShadowRoot | Element, selecto
 export function querySelectorAllDeep(root: Document | ShadowRoot | Element, selector: string): Element[] {
   const ElementCtor = getElementCtor(root);
   if (!ElementCtor) return [];
-  function walk(node: Document | ShadowRoot | Element, sel: string, results: Element[]) {
-    if (node instanceof ElementCtor && (node as Element).matches(sel)) {
+  const elementCtor = ElementCtor;
+  function walk(node: RootNode, sel: string, results: Element[]) {
+    if (isElementNode(node, elementCtor) && node.matches(sel)) {
       results.push(node);
     }
-    if (node instanceof ElementCtor && (node as Element).shadowRoot) {
+    if (isElementNode(node, elementCtor) && node.shadowRoot) {
       walk(node.shadowRoot, sel, results);
     }
-    const children: Element[] = [];
-    if ("children" in node) {
-      children.push(...Array.from((node as Element | Document | ShadowRoot).children));
-    }
-    for (const child of children) {
+    for (const child of nodeChildren(node)) {
       walk(child, sel, results);
     }
   }
 
-  function findAll(rootNode: Document | ShadowRoot | Element, sel: string) {
+  function findAll(rootNode: RootNode, sel: string) {
     const results: Element[] = [];
     walk(rootNode, sel, results);
     return results;
@@ -74,7 +81,7 @@ export function querySelectorAllDeep(root: Document | ShadowRoot | Element, sele
 
   if (selector.includes(">>>")) {
     const parts = selector.split(">>>").map((p) => p.trim()).filter(Boolean);
-    let scope: Array<Document | ShadowRoot | Element> = [root];
+    let scope: RootNode[] = [root];
     for (const part of parts) {
       const matches: Element[] = [];
       for (const item of scope) {

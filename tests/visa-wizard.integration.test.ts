@@ -14,7 +14,7 @@ async function waitForStep(page: any, stepId: string) {
   const timeoutMs = 45_000;
   await page.expect('[data-testid="loading-overlay"]', { timeoutMs }).toBeHidden();
   await page.expect(`[data-testid="step-${stepId}"]`, { timeoutMs }).toBeVisible();
-  const current = await page.evaluate(() => window.APP_DEBUG?.getCurrentStep?.()?.id);
+  const current = await page.evaluate(() => (window as any).APP_DEBUG?.getCurrentStep?.()?.id);
   if (current && current !== stepId) {
     throw new Error(`Navigation stuck on step ${current}, expected ${stepId}`);
   }
