@@ -9,8 +9,8 @@ npm install @quitecode/chromium-automaton
 ## Download Chromium
 
 ```bash
-npx chromium-automaton download
-npx chromium-automaton download --latest
+npx ca download
+npx ca download --latest
 ```
 
 ## Launch and navigate
@@ -30,9 +30,6 @@ async function main() {
 
   await page.goto("https://example.com", { waitUntil: "load" });
   await page.expect("h1").toHaveText(/Example Domain/);
-
-  await page.type("#query", "hello world");
-  await page.click("#search");
 
   await browser.close();
 }

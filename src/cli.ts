@@ -1,7 +1,7 @@
 import { ChromiumManager } from "./browser/ChromiumManager.js";
 
 function printHelp() {
-  console.log("chromium-automaton download [--latest]");
+  console.log("ca download [--latest]");
 }
 
 async function main() {

@@ -4,6 +4,7 @@
   "description": "Lightweight Chromium-only browser automation library using CDP",
   "type": "module",
   "bin": {
+    "ca": "dist/cli.js",
     "chromium-automaton": "dist/cli.js"
   },
   "exports": {

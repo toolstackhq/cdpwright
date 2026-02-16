@@ -6,7 +6,7 @@ Chromium-only automation built on the Chrome DevTools Protocol (CDP). A lightwei
 
 ```bash
 npm install @quitecode/chromium-automaton
-npx chromium-automaton download    # downloads a pinned Chromium build
+npx ca download    # downloads a pinned Chromium build
 ```
 
 ```ts
@@ -32,7 +32,7 @@ node quick.js
 - Small surface: pages/frames/locators, plus built-in expect matchers.
 - Selector routing: CSS by default; XPath if the selector starts with `/`, `./`, `.//`, `..`, or `(/`. Shadow DOM via `>>>` (e.g., `host >>> button`).
 - Contexts: `browser.newContext()` gives incognito-style isolation without launching a new browser.
-- Downloads: `npx chromium-automaton download` (or `--latest`) fetches Chromium into a local cache.
+- Downloads: `npx ca download` (or `--latest`) fetches Chromium into a local cache.
 
 ## Key APIs
 - `chromium.launch(options)` → `Browser`
@@ -45,7 +45,7 @@ node quick.js
 
 ## Architecture at a glance (render-friendly)
 ```
-CLI (chromium-automaton download) -> Downloader -> Chromium cache
+CLI (ca download) -> Downloader -> Chromium cache
 
 User code -> chromium.launch -> ChromiumManager -> Chromium process
 Chromium process -> CDP connection -> Browser -> Page -> Frame
