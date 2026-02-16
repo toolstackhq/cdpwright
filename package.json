@@ -1,6 +1,6 @@
 {
-  "name": "@automaton/chromium-automaton",
-  "version": "0.1.0-beta.7",
+  "name": "@automation01/chromium-automaton",
+  "version": "1.0.0",
   "description": "Lightweight Chromium-only browser automation library using CDP",
   "type": "module",
   "bin": {
