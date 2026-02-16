@@ -42,9 +42,9 @@ jobs:
         run: |
           VERSION=$(node -p "require('./package.json').version")
           if [[ "${GITHUB_REF_NAME}" == *"-beta"* ]]; then
-            npm dist-tag add @quitecode/chromium-automaton@${VERSION} beta
+            npm dist-tag add @anoops90/chromium-automaton@${VERSION} beta
           else
-            npm dist-tag add @quitecode/chromium-automaton@${VERSION} latest
+            npm dist-tag add @anoops90/chromium-automaton@${VERSION} latest
           fi
 
       - name: Create GitHub Release with notes
