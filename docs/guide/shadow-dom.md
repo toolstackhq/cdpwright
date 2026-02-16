@@ -11,6 +11,6 @@ Use `>>>` shadow selectors for open shadow roots.
 await page.click("button-host >>> button.action");
 
 // Read text from inside a shadow root
-const text = await page.textContent("button-host >>> .title");
+await page.expect("button-host >>> .title").toHaveText("Ready");
 
 ```
