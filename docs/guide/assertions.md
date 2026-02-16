@@ -1,7 +1,7 @@
 # Assertions
 
 ```ts
-import { expect } from "@quitecode/chromium-automaton";
+import { expect } from "@anoops90/chromium-automaton";
 
 await expect(page).element(".ready").toExist();
 await expect(page).element(".hidden").not.toBeVisible();
