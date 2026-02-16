@@ -3,7 +3,7 @@
 ## Install
 
 ```bash
-npm install @anoops90/chromium-automaton
+npm install @automaton/chromium-automaton
 ```
 
 ## Download Chromium
@@ -22,7 +22,7 @@ node index.js
 ```
 
 ```js
-import { chromium } from "@anoops90/chromium-automaton";
+import { chromium } from "@automaton/chromium-automaton";
 
 async function main() {
   const browser = await chromium.launch({ headless: true, logEvents: true });

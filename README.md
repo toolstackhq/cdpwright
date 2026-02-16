@@ -5,13 +5,13 @@ Chromium-only automation built on the Chrome DevTools Protocol (CDP). A lightwei
 ## Quick start
 
 ```bash
-npm install @anoops90/chromium-automaton
+npm install @automaton/chromium-automaton
 npx ca download    # downloads a pinned Chromium build
 ```
 
 ```ts
 // quick.js
-import { chromium, expect } from "@anoops90/chromium-automaton";
+import { chromium, expect } from "@automaton/chromium-automaton";
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage();
