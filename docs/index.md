@@ -26,7 +26,7 @@ hero:
 ## Quick Example
 
 ```ts
-import { chromium, expect } from "@automaton/chromium-automaton";
+import { chromium, expect } from "@automation01/chromium-automaton";
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage();

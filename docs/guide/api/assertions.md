@@ -3,7 +3,7 @@
 Use the built-in `expect` helpers to assert against elements.
 
 ```ts
-import { expect } from "@automaton/chromium-automaton";
+import { expect } from "@automation01/chromium-automaton";
 
 await expect(page).element(".ready").toExist();
 await page.expect("#submit").toBeVisible();        // convenience on Page
