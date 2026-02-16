@@ -27,6 +27,7 @@ Options:
 
 ```ts
 const context = await browser.newContext(); // fresh incognito-style profile
+const contextId = context.getId();
 const page = await context.newPage();
 ```
 
@@ -40,6 +41,24 @@ await page.goto("https://example.com");
 ```
 
 Use additional pages to run tabs in parallel within the same profile.
+
+## Events
+
+```ts
+browser.on("action:end", (event) => {
+  console.log(event.name, event.selector, event.durationMs);
+});
+
+browser.on("assertion:end", (event) => {
+  console.log(event.name, event.status); // "passed" | "failed"
+});
+```
+
+Supported events:
+- `action:start`
+- `action:end`
+- `assertion:start`
+- `assertion:end`
 
 ## Close
 

@@ -14,15 +14,24 @@ await child.selectOption("#expiry-month", "01");
 Use CSS, XPath, or shadow selectors (`host >>> button`) the same way you do on `Page`.
 
 Frames also support:
+- `locator(selector)`
 - `evaluate(fn, ...args)`
 - `query / queryAll`
 - `queryXPath / queryAllXPath`
-- `dblclick`
+- `click` / `dblclick`
 - `type` / `typeSecure`
+- `fillInput`
 - `selectOption`
 - `setFileInput`
-- `textSecure` / `valueSecure`
-- `screenshot` / `screenshotBase64` via the parent page
+- `findLocators`
+- `exists` / `isVisible`
+- `text` / `textSecure`
+- `attribute` / `value` / `valueSecure`
+- `count` / `classes` / `css`
+- `isEnabled` / `isChecked` / `isEditable`
+- `hasFocus` / `isInViewport`
+
+Screenshots are page-level APIs: use `page.screenshot()` or `page.screenshotBase64()`.
 
 Combine frames with `expect`:
 

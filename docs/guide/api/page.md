@@ -46,6 +46,7 @@ await page.setFileInput("#resume", "resume.txt", "contents", { mimeType: "text/p
 
 ```ts
 const title = await page.evaluate(() => document.title);
+const href = await page.evaluate("location.href");
 ```
 
 ## Text helpers
@@ -76,6 +77,22 @@ const login = page.frame({ urlIncludes: "/login" });
 const field = page.locator("#name");
 await field.type("Casey");
 ```
+
+## Locator discovery
+
+```ts
+const locators = await page.findLocators({
+  highlight: true
+});
+
+// alias
+const locators2 = await page.find.locators({
+  outputJson: "locators.json",
+  outputHtml: "locators.html"
+});
+```
+
+`findLocators` supports `highlight`, `outputPath`, `outputJson`, and `outputHtml`.
 
 ## Assertions
 
