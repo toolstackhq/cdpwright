@@ -8,8 +8,11 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,17 +25,13 @@ jobs:
           always-auth: true
 
       - name: Validate npm token
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN || vars.NPM_TOKEN }}
         run: |
           if [ -z "${NPM_TOKEN}" ]; then
-            echo "NPM_TOKEN is not set. Configure it in GitHub Actions secrets (recommended) or variables."
+            echo "NPM_TOKEN is not set. If it is an Environment secret, ensure this job targets that environment and branch rules allow this ref."
             exit 1
           fi
 
       - name: Configure npm auth
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN || vars.NPM_TOKEN }}
         run: npm config set //registry.npmjs.org/:_authToken "${NPM_TOKEN}"
 
       - name: Install
@@ -43,5 +42,5 @@ jobs:
 
       - name: Publish
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN || vars.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public
