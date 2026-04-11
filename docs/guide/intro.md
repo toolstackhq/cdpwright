@@ -1,6 +1,6 @@
 # Introduction
 
-Chromium Automaton is a lightweight, Chromium-only automation library built directly on CDP. It provides a Playwright-style API without a test runner or reporting layer.
+cdpwright is a lightweight, Chromium-only automation library built directly on CDP. It provides a Playwright-style API without a test runner or reporting layer.
 
 ## Goals
 - Small API surface

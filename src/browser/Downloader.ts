@@ -26,9 +26,9 @@ export function platformFolder(platform: Platform) {
 export function defaultCacheRoot(platform: Platform) {
   if (platform === "win") {
     const localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local");
-    return path.join(localAppData, "chromium-automaton");
+    return path.join(localAppData, "cdpwright");
   }
-  return path.join(os.homedir(), ".cache", "chromium-automaton");
+  return path.join(os.homedir(), ".cache", "cdpwright");
 }
 
 export function ensureWithinRoot(root: string, target: string) {
@@ -91,7 +91,7 @@ export async function ensureDownloaded(options: DownloadOptions) {
   const zipName = platform === "win" ? "chrome-win.zip" : platform === "mac" ? "chrome-mac.zip" : "chrome-linux.zip";
   const downloadUrl = `${SNAPSHOT_BASE}/${folder}/${revision}/${zipName}`;
 
-  const tempZipPath = path.join(os.tmpdir(), `chromium-automaton-${platform}-${revision}.zip`);
+  const tempZipPath = path.join(os.tmpdir(), `cdpwright-${platform}-${revision}.zip`);
 
   logger.info("Downloading Chromium snapshot", downloadUrl);
   await downloadFile(downloadUrl, tempZipPath, logger);

@@ -5,7 +5,7 @@ Work with the top-level browser, contexts, and pages.
 ## Launch
 
 ```ts
-import { chromium } from "@automation01/chromium-automaton";
+import { chromium } from "@toolstackhq/cdpwright";
 
 const browser = await chromium.launch({
   headless: false,          // default is true

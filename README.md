@@ -1,17 +1,17 @@
-# Chromium Automaton
+# cdpwright
 
 Chromium-only automation built on the Chrome DevTools Protocol (CDP). A lightweight, Playwright-style API with `Browser`, `Context`, `Page`, `Frame`, and `Locator` primitives—no test runner included.
 
 ## Quick start
 
 ```bash
-npm install @automation01/chromium-automaton
-npx ca download    # downloads a pinned Chromium build
+npm install @toolstackhq/cdpwright
+npx cpw download    # downloads a pinned Chromium build
 ```
 
 ```ts
 // quick.js
-import { chromium, expect } from "@automation01/chromium-automaton";
+import { chromium, expect } from "@toolstackhq/cdpwright";
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage();
@@ -32,7 +32,7 @@ node quick.js
 - Small surface: pages/frames/locators, plus built-in expect matchers.
 - Selector routing: CSS by default; XPath if the selector starts with `/`, `./`, `.//`, `..`, or `(/`. Shadow DOM via `>>>` (e.g., `host >>> button`).
 - Contexts: `browser.newContext()` gives incognito-style isolation without launching a new browser.
-- Downloads: `npx ca download` (or `--latest`) fetches Chromium into a local cache.
+- Downloads: `npx cpw download` (or `--latest`) fetches Chromium into a local cache.
 
 ## Key APIs
 - `chromium.launch(options)` → `Browser`
@@ -45,7 +45,7 @@ node quick.js
 
 ## Architecture at a glance (render-friendly)
 ```
-CLI (ca download) -> Downloader -> Chromium cache
+CLI (cpw download) -> Downloader -> Chromium cache
 
 User code -> chromium.launch -> ChromiumManager -> Chromium process
 Chromium process -> CDP connection -> Browser -> Page -> Frame
@@ -53,7 +53,7 @@ Page -> Locator / expect
 ```
 
 ## Docs
-Full guide and API reference: https://quitecode9-lab.github.io/chromium-automation/ (built from `docs/` via VitePress). Start at `docs/guide/intro.md` or `docs/guide/api/`.
+Full guide and API reference: https://toolstackhq.github.io/cdpwright/ (built from `docs/` via VitePress). Start at `docs/guide/intro.md` or `docs/guide/api/`.
 
 ## Demo app
 `index.html` is a local, data-driven visa-style wizard used to stress-test automation flows (no server required). Open it directly via `file://` to exercise navigation, conditionals, overlays, Shadow DOM, uploads, and receipts.

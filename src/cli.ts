@@ -1,7 +1,7 @@
 import { ChromiumManager } from "./browser/ChromiumManager.js";
 
 function printHelp() {
-  console.log("ca download [--latest]");
+  console.log("cdpwright (cpw) download [--latest]");
 }
 
 async function main() {

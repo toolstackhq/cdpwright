@@ -1,11 +1,19 @@
 {
-  "name": "@automation01/chromium-automaton",
+  "name": "@toolstackhq/cdpwright",
   "version": "1.0.0",
   "description": "Lightweight Chromium-only browser automation library using CDP",
   "type": "module",
   "bin": {
-    "ca": "dist/cli.js",
-    "chromium-automaton": "dist/cli.js"
+    "cpw": "dist/cli.js",
+    "cdpwright": "dist/cli.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/toolstackhq/cdpwright.git"
+  },
+  "homepage": "https://github.com/toolstackhq/cdpwright#readme",
+  "bugs": {
+    "url": "https://github.com/toolstackhq/cdpwright/issues"
   },
   "exports": {
     ".": {

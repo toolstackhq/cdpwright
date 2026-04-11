@@ -14,13 +14,13 @@ describe("cache path", () => {
 
   it("uses linux cache under home", () => {
     const root = defaultCacheRoot("linux");
-    expect(root).toContain("chromium-automaton");
+    expect(root).toContain("cdpwright");
   });
 
   it("uses windows local app data when set", () => {
     process.env.LOCALAPPDATA = "C:\\Users\\Test\\AppData\\Local";
     const root = defaultCacheRoot("win");
-    expect(root).toContain("chromium-automaton");
+    expect(root).toContain("cdpwright");
     expect(root).toContain("AppData");
   });
 });

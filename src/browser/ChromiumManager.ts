@@ -40,7 +40,7 @@ export class ChromiumManager {
   private logger: Logger;
 
   constructor(logger?: Logger) {
-    const envLevel = (process.env.CHROMIUM_AUTOMATON_LOG_LEVEL as LogLevel | undefined) ?? "info";
+    const envLevel = (process.env.CDPWRIGHT_LOG_LEVEL as LogLevel | undefined) ?? "info";
     this.logger = logger ?? new Logger(envLevel);
   }
 
@@ -51,8 +51,8 @@ export class ChromiumManager {
   async download(options: DownloadOptions = {}): Promise<ResolvedDownload> {
     const platform = detectPlatform();
     const cacheRoot = this.resolveCacheRoot(platform);
-    const overrideExecutable = process.env.CHROMIUM_AUTOMATON_EXECUTABLE_PATH;
-    let revision = options.latest ? await fetchLatestRevision(platform) : resolveRevision(process.env.CHROMIUM_AUTOMATON_REVISION);
+    const overrideExecutable = process.env.CDPWRIGHT_EXECUTABLE_PATH;
+    let revision = options.latest ? await fetchLatestRevision(platform) : resolveRevision(process.env.CDPWRIGHT_REVISION);
     let executablePath: string;
     let revisionDir = "";
     if (overrideExecutable) {
@@ -95,12 +95,12 @@ export class ChromiumManager {
       logger.setLevel(options.logLevel);
     }
 
-    const executablePath = options.executablePath || process.env.CHROMIUM_AUTOMATON_EXECUTABLE_PATH;
+    const executablePath = options.executablePath || process.env.CDPWRIGHT_EXECUTABLE_PATH;
     let resolvedExecutable = executablePath;
     if (!resolvedExecutable) {
       const platform = detectPlatform();
       const cacheRoot = this.resolveCacheRoot(platform);
-      const revision = resolveRevision(process.env.CHROMIUM_AUTOMATON_REVISION);
+      const revision = resolveRevision(process.env.CDPWRIGHT_REVISION);
       const downloaded = await ensureDownloaded({
         cacheRoot,
         platform,
@@ -120,9 +120,9 @@ export class ChromiumManager {
     ensureExecutable(resolvedExecutable);
 
     const cleanupTasks: Array<() => void> = [];
-    let userDataDir = options.userDataDir ?? process.env.CHROMIUM_AUTOMATON_USER_DATA_DIR;
+    let userDataDir = options.userDataDir ?? process.env.CDPWRIGHT_USER_DATA_DIR;
     if (!userDataDir) {
-      userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "chromium-automaton-"));
+      userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), "cdpwright-"));
       cleanupTasks.push(() => fs.rmSync(userDataDir as string, { recursive: true, force: true }));
     }
 
@@ -161,9 +161,9 @@ export class ChromiumManager {
     const connection = new Connection(wsEndpoint, logger);
     await closeInitialPages(connection, logger);
     const events = new AutomationEvents();
-    const logEvents = resolveLogFlag(options.logEvents, process.env.CHROMIUM_AUTOMATON_LOG, true);
-    const logActions = resolveLogFlag(options.logActions, process.env.CHROMIUM_AUTOMATON_LOG_ACTIONS, true);
-    const logAssertions = resolveLogFlag(options.logAssertions, process.env.CHROMIUM_AUTOMATON_LOG_ASSERTIONS, true);
+    const logEvents = resolveLogFlag(options.logEvents, process.env.CDPWRIGHT_LOG, true);
+    const logActions = resolveLogFlag(options.logActions, process.env.CDPWRIGHT_LOG_ACTIONS, true);
+    const logAssertions = resolveLogFlag(options.logAssertions, process.env.CDPWRIGHT_LOG_ASSERTIONS, true);
     if (logEvents && logActions) {
       events.on("action:end", (payload) => {
         const selector = payload.sensitive ? undefined : payload.selector;
@@ -183,7 +183,7 @@ export class ChromiumManager {
   }
 
   private resolveCacheRoot(platform: Platform) {
-    const envRoot = process.env.CHROMIUM_AUTOMATON_CACHE_DIR;
+    const envRoot = process.env.CDPWRIGHT_CACHE_DIR;
     if (envRoot && envRoot.trim()) {
       return path.resolve(envRoot.trim());
     }

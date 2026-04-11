@@ -1,4 +1,4 @@
-import { chromium, expect } from "@quitecode/chromium-automaton";
+import { chromium, expect } from "@toolstackhq/cdpwright";
 
 const browser = await chromium.launch({
   headless: false,

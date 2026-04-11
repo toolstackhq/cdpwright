@@ -211,7 +211,7 @@ export class Frame {
     const outputHtml = resolveOut(options.outputHtml);
     const expression = `(function() {
       const highlight = ${options.highlight !== false};
-      const previous = Array.from(document.querySelectorAll(".__ca-locator-overlay"));
+      const previous = Array.from(document.querySelectorAll(".__cdpwright-locator-overlay"));
       previous.forEach((el) => el.remove());
 
       const cssEscape = (value) => {
@@ -346,7 +346,7 @@ export class Frame {
           if (!el) return;
           const rect = el.getBoundingClientRect();
           const overlay = document.createElement("div");
-          overlay.className = "__ca-locator-overlay";
+          overlay.className = "__cdpwright-locator-overlay";
           overlay.style.position = "absolute";
           overlay.style.left = rect.x + window.scrollX + "px";
           overlay.style.top = rect.y + window.scrollY + "px";

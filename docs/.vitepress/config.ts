@@ -1,9 +1,9 @@
 import { defineConfig } from "vitepress";
 
 export default defineConfig({
-  title: "Chromium Automaton",
+  title: "cdpwright",
   description: "Lightweight Chromium-only browser automation built on CDP",
-  base: "/chromium-automation/",
+  base: "/cdpwright/",
   themeConfig: {
     nav: [
       { text: "Guide", link: "/guide/intro" },
@@ -31,7 +31,7 @@ export default defineConfig({
       ]
     },
     socialLinks: [
-      { icon: "github", link: "https://github.com/quitecode9-lab/chromium-automation" }
+      { icon: "github", link: "https://github.com/toolstackhq/cdpwright" }
     ]
   }
 });

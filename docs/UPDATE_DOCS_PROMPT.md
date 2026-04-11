@@ -4,7 +4,7 @@ Use this prompt when asking an assistant to refresh the docs after code changes.
 
 ---
 
-You are updating the VitePress docs for Chromium Automaton. Keep docs accurate and aligned with current code. Follow these steps:
+You are updating the VitePress docs for cdpwright. Keep docs accurate and aligned with current code. Follow these steps:
 
 1. Review public API surface:
    - src/index.ts exports

@@ -3,14 +3,14 @@
 ## Install
 
 ```bash
-npm install @automation01/chromium-automaton
+npm install @toolstackhq/cdpwright
 ```
 
 ## Download Chromium
 
 ```bash
-npx ca download
-npx ca download --latest
+npx cpw download
+npx cpw download --latest
 ```
 
 ## Launch and navigate
@@ -22,7 +22,7 @@ node index.js
 ```
 
 ```js
-import { chromium } from "@automation01/chromium-automaton";
+import { chromium } from "@toolstackhq/cdpwright";
 
 async function main() {
   const browser = await chromium.launch({ headless: true, logEvents: true });

@@ -1,7 +1,7 @@
 ---
 layout: home
 hero:
-  name: Chromium Automaton
+  name: cdpwright
   text: Lightweight Chromium-only automation
   tagline: CDP-powered, Playwright-style API without the framework baggage.
   actions:
@@ -26,7 +26,7 @@ hero:
 ## Quick Example
 
 ```ts
-import { chromium, expect } from "@automation01/chromium-automaton";
+import { chromium, expect } from "@toolstackhq/cdpwright";
 
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage();
