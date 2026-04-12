@@ -8,6 +8,7 @@ import { expect } from "@toolstackhq/cdpwright";
 await expect(page).element(".ready").toExist();
 await page.expect("#submit").toBeVisible();        // convenience on Page
 await page.expect().element("h1").toHaveText(/Visa Application/);
+await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
 ```
 
 Common matchers:

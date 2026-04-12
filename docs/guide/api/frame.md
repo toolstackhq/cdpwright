@@ -15,6 +15,8 @@ Use CSS, XPath, or shadow selectors (`host >>> button`) the same way you do on `
 
 Frames also support:
 - `locator(selector)`
+- `getByRole(role, options?)`
+- `getByText(text, options?)`
 - `evaluate(fn, ...args)`
 - `query / queryAll`
 - `queryXPath / queryAllXPath`
@@ -38,4 +40,5 @@ Combine frames with `expect`:
 ```ts
 const payment = page.frame({ urlIncludes: "payments" });
 await page.expect().frame({ urlIncludes: "payments" }).element("#pay").toBeEnabled();
+await payment.getByRole("button", { name: "Pay now" }).click();
 ```

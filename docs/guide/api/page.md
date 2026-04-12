@@ -84,7 +84,14 @@ const login = page.frame({ urlIncludes: "/login" });
 ```ts
 const field = page.locator("#name");
 await field.type("Casey");
+
+const signIn = page.getByRole("button", { name: "Sign in" });
+await signIn.click();
+
+await page.expect(page.getByText("Welcome, Casey!")).toBeVisible();
 ```
+
+`getByRole()` matches by ARIA role and accessible name. `getByText()` normalizes whitespace and supports exact or regex matches.
 
 ## Locator discovery
 
@@ -109,6 +116,7 @@ Use the built-in expect helpers:
 ```ts
 await page.expect("#submit").toBeVisible();
 await page.expect().element("h1").toHaveText(/Example/);
+await page.expect(page.getByText("Ready")).toBeVisible();
 ```
 
 See [Assertions](./assertions.md) for matcher details.
