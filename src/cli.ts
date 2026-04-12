@@ -64,36 +64,28 @@ function printHelp() {
   console.log(`cdpwright (cpw) — Chromium automation CLI
 
 Commands:
+  screenshot <url> -o f    Take a screenshot (PNG/JPEG)
+  pdf <url> -o file.pdf    Generate visual PDF of page
+  html <url> -o file.html  Save the page HTML source
+  eval <url> <script>      Run JS in page, print result as JSON
   download [options]       Download pinned Chromium snapshot
   install                  Alias for download
-  open <url>               Launch browser session and navigate to URL
-  close                    Close the running browser session
-  screenshot [url] -o f    Take a screenshot (PNG/JPEG)
-  html [url] -o file.html  Save the page HTML source
-  pdf [url] -o file.pdf    Generate PDF of page (headless only)
-  eval [url] <script>      Run script in page, print result as JSON
   version                  Print cdpwright and Chromium versions
 
-Session:
-  'open' starts a browser and saves a session. Other commands auto-connect
-  to the running session when no URL is given. 'close' shuts it down.
-
-Download options:
-  --latest                 Download the latest Chromium revision
-  --mirror <url>           Custom mirror base URL
-  --url <url>              Exact zip URL override
-
-Common options:
+Options:
   --headless               Run in headless mode (default for screenshot, pdf, eval)
-  --headed                 Run in headed mode (default for open)
+  --headed                 Run in headed mode
+  -o, --output <file>      Output file path (for screenshot, html, pdf)
+  --full-page              Capture full scrollable page (for screenshot)
+  --latest                 Download the latest Chromium revision (for download)
+  --mirror <url>           Custom mirror base URL (for download)
+  --url <url>              Exact zip URL override (for download)
 
-Screenshot options:
-  -o, --output <file>      Output file path (required)
-  --full-page              Capture full scrollable page
-
-PDF options:
-  -o, --output <file>      Output file path (required)
-  Note: pdf always runs headless (CDP limitation)`);
+Interactive session:
+  open <url>               Open browser and start a session
+  close                    Close the running session
+  When a session is running, commands accept no URL and operate on the
+  live page instead:  cpw screenshot -o shot.png | cpw eval "document.title"`);
 }
 
 function hasFlag(args: string[], flag: string): boolean {

@@ -17,23 +17,44 @@ cpw <command>
 
 > All examples below use `npx cpw` — drop the `npx` if installed globally.
 
-## Sessions
+## Commands
 
-`cpw open` launches a browser and saves a **session**. While the session is running, other commands (`screenshot`, `html`, `pdf`, `eval`) can be run from a separate terminal **without a URL** — they auto-connect to the open browser.
+Each command launches its own browser, does its job, and exits. No setup needed.
+
+### `cpw screenshot <url> -o <file>`
+
+Capture a screenshot (PNG or JPEG based on file extension).
 
 ```bash
-# Terminal 1
-npx cpw open https://example.com
-
-# Terminal 2 (while Terminal 1 is running)
-npx cpw screenshot -o shot.png
-npx cpw eval "document.title"
-npx cpw close
+npx cpw screenshot https://example.com -o shot.png
+npx cpw screenshot https://example.com -o shot.png --full-page
+npx cpw screenshot https://example.com -o shot.jpg --headed
 ```
 
-When a URL **is** provided, commands run standalone (launch → act → close) without needing a session.
+### `cpw pdf <url> -o <file>`
 
-## Commands
+Generate a visual PDF of the page by rendering a screenshot into a PDF. This matches the on-screen browser view better than Chromium's print stylesheet.
+
+```bash
+npx cpw pdf https://example.com -o page.pdf
+```
+
+### `cpw html <url> -o <file>`
+
+Save the page's current HTML source to disk.
+
+```bash
+npx cpw html https://example.com -o page.html
+```
+
+### `cpw eval <url> <script>`
+
+Run a JavaScript expression in the page and print the result as JSON.
+
+```bash
+npx cpw eval https://example.com "document.title"
+npx cpw eval https://example.com "document.querySelectorAll('a').length"
+```
 
 ### `cpw download`
 
@@ -48,13 +69,36 @@ npx cpw download --url <url>      # use an exact zip URL
 
 `install` is an alias for `download`.
 
+### `cpw version`
+
+Print cdpwright and Chromium versions.
+
+```bash
+npx cpw version
+```
+
+## Options
+
+| Flag | Description |
+|------|-------------|
+| `--headless` | Run in headless mode (default for `screenshot`, `pdf`, `eval`) |
+| `--headed` | Run in headed mode |
+| `-o`, `--output <file>` | Output file path (for `screenshot`, `html`, and `pdf`) |
+| `--full-page` | Capture full scrollable page (for `screenshot`) |
+| `--latest` | Download the latest Chromium revision (for `download`) |
+| `--mirror <url>` | Custom mirror base URL (for `download`) |
+| `--url <url>` | Exact zip URL override (for `download`) |
+
+## Interactive session
+
+For interactive workflows — manually browse a page, then run CLI commands against it from another terminal.
+
 ### `cpw open <url>`
 
-Launch a headed browser, navigate to a URL, and save a session. The browser stays open until you press `Ctrl+C` or run `cpw close` from another terminal.
+Launch a headed browser, navigate to a URL, and start a session. The browser stays open until you press `Ctrl+C` or run `cpw close`.
 
 ```bash
 npx cpw open https://example.com
-npx cpw open https://example.com --headless
 ```
 
 ### `cpw close`
@@ -65,73 +109,22 @@ Close the running browser session.
 npx cpw close
 ```
 
-### `cpw screenshot [url] -o <file>`
+### Using commands with a session
 
-Capture a screenshot (PNG or JPEG based on file extension).
+While a session is running, commands work **without a URL** — they operate on the live page:
 
 ```bash
-# Standalone (launches its own browser)
-npx cpw screenshot https://example.com -o shot.png
-npx cpw screenshot https://example.com -o shot.png --full-page
+# Terminal 1 — open and manually browse
+npx cpw open https://example.com
 
-# Session (connects to running browser, no URL needed)
+# Terminal 2 — run commands against the live page
 npx cpw screenshot -o shot.png
-```
-
-### `cpw html [url] -o <file>`
-
-Save the page's current HTML source to disk.
-
-```bash
-npx cpw html https://example.com -o page.html
-
-# Session mode
-npx cpw html -o page.html
-```
-
-### `cpw pdf [url] -o <file>`
-
-Generate a visual PDF of the page by rendering a screenshot into a PDF. This matches the on-screen browser view better than Chromium's print stylesheet.
-
-```bash
-npx cpw pdf https://example.com -o page.pdf
-
-# Session mode
-npx cpw pdf -o page.pdf
-```
-
-### `cpw eval [url] <script>`
-
-Run a JavaScript expression in the page and print the result as JSON.
-
-```bash
-# Standalone
-npx cpw eval https://example.com "document.title"
-
-# Session (just the script, no URL)
 npx cpw eval "document.title"
-npx cpw eval "document.querySelectorAll('a').length"
+npx cpw pdf -o page.pdf
+npx cpw close
 ```
 
-### `cpw version`
-
-Print cdpwright and Chromium versions. Also shows whether a session is active.
-
-```bash
-npx cpw version
-```
-
-## Common options
-
-| Flag | Description |
-|------|-------------|
-| `--headless` | Run in headless mode (default for `screenshot`, `pdf`, `eval`) |
-| `--headed` | Run in headed mode (default for `open`) |
-| `-o`, `--output <file>` | Output file path (for `screenshot`, `html`, and `pdf`) |
-| `--full-page` | Capture full scrollable page (for `screenshot`) |
-| `--latest` | Download the latest Chromium revision (for `download`) |
-| `--mirror <url>` | Custom mirror base URL (for `download`) |
-| `--url <url>` | Exact zip URL override (for `download`) |
+This is useful when you need to log in, navigate to a specific state, or interact with the page before capturing or extracting data.
 
 ## Corporate proxy / internal mirrors
 
