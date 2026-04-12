@@ -7,9 +7,22 @@ import { waitFor } from "./Waiter.js";
 import { parseSelector } from "./Selectors.js";
 import { serializeShadowDomHelpers } from "./ShadowDom.js";
 import { Locator } from "./Locator.js";
+import type { LocatorQuery } from "./Locator.js";
 
 export type FrameSelectorOptions = {
   pierceShadowDom?: boolean;
+  timeoutMs?: number;
+};
+
+export type TextLocatorOptions = {
+  exact?: boolean;
+  timeoutMs?: number;
+};
+
+export type RoleLocatorOptions = {
+  name?: string | RegExp;
+  exact?: boolean;
+  includeHidden?: boolean;
   timeoutMs?: number;
 };
 
@@ -67,6 +80,10 @@ export class Frame {
     this.parentId = meta.parentId;
   }
 
+  getEvents() {
+    return this.events;
+  }
+
   async evaluate<T = unknown>(fnOrString: string | ((...args: any[]) => any), ...args: any[]): Promise<T> {
     return this.evaluateInContext(fnOrString, args);
   }
@@ -88,7 +105,15 @@ export class Frame {
   }
 
   locator(selector: string, options: FrameSelectorOptions = {}) {
-    return new Locator(this, selector, options);
+    return new Locator(this, { kind: "selector", selector, options });
+  }
+
+  getByText(text: string | RegExp, options: TextLocatorOptions = {}) {
+    return new Locator(this, { kind: "text", text, options });
+  }
+
+  getByRole(role: string, options: RoleLocatorOptions = {}) {
+    return new Locator(this, { kind: "role", role, options });
   }
 
   async click(selector: string, options: ClickOptions = {}) {
@@ -538,6 +563,193 @@ export class Frame {
     return Boolean(box && box.visible);
   }
 
+  async clickLocator(query: LocatorQuery, options: ClickOptions = {}) {
+    await this.performClickLocator(query, options, false);
+  }
+
+  async dblclickLocator(query: LocatorQuery, options: ClickOptions = {}) {
+    await this.performClickLocator(query, options, true);
+  }
+
+  async typeLocator(query: LocatorQuery, text: string, options: TypeOptions = {}) {
+    const start = Date.now();
+    const description = this.locatorDescription(query);
+    this.events.emit("action:start", { name: "type", selector: description, frameId: this.id, sensitive: options.sensitive });
+    await waitFor(async () => {
+      const box = await this.resolveLocatorElementBox(query, options);
+      if (!box || !box.visible) {
+        return false;
+      }
+      return true;
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `type ${description}` });
+
+    const focusExpression = this.buildLocatorExpression(query, `
+      if (!el) {
+        return;
+      }
+      el.focus();
+    `);
+    const focusParams: Record<string, unknown> = {
+      expression: focusExpression,
+      returnByValue: true
+    };
+    if (this.contextId) {
+      focusParams.contextId = this.contextId;
+    }
+    await this.session.send("Runtime.evaluate", focusParams);
+    await this.session.send("Input.insertText", { text });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "type", selector: description, frameId: this.id, durationMs: duration, sensitive: options.sensitive });
+    this.logger.debug("Type", description, `${duration}ms`);
+  }
+
+  async existsLocator(query: LocatorQuery) {
+    return Boolean(await this.evalOnLocator<boolean | null>(query, false, `
+      return Boolean(el);
+    `));
+  }
+
+  async isVisibleLocator(query: LocatorQuery) {
+    return this.evalOnLocator<boolean | null>(query, false, `
+      if (!el) {
+        return null;
+      }
+      const rect = el.getBoundingClientRect();
+      const style = window.getComputedStyle(el);
+      return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none" && Number(style.opacity || "1") > 0;
+    `);
+  }
+
+  async isEnabledLocator(query: LocatorQuery) {
+    return this.evalOnLocator<boolean | null>(query, false, `
+      if (!el) {
+        return null;
+      }
+      const disabled = Boolean(el.disabled) || el.hasAttribute("disabled");
+      const ariaDisabled = el.getAttribute && el.getAttribute("aria-disabled") === "true";
+      return !(disabled || ariaDisabled);
+    `);
+  }
+
+  async isCheckedLocator(query: LocatorQuery) {
+    return this.evalOnLocator<boolean | null>(query, false, `
+      if (!el) {
+        return null;
+      }
+      const aria = el.getAttribute && el.getAttribute("aria-checked");
+      if (aria === "true") {
+        return true;
+      }
+      if (aria === "false") {
+        return false;
+      }
+      if ("checked" in el) {
+        return Boolean(el.checked);
+      }
+      return null;
+    `);
+  }
+
+  async textLocator(query: LocatorQuery) {
+    return this.evalOnLocator<string | null>(query, false, `
+      if (!el) {
+        return null;
+      }
+      if (el instanceof HTMLInputElement) {
+        const type = (el.getAttribute("type") || "text").toLowerCase();
+        if (type === "button" || type === "submit" || type === "reset") {
+          return el.value || "";
+        }
+      }
+      return el.textContent || "";
+    `);
+  }
+
+  async valueLocator(query: LocatorQuery) {
+    return this.evalOnLocator<string | null>(query, false, `
+      if (!el) {
+        return null;
+      }
+      if ("value" in el) {
+        return el.value ?? "";
+      }
+      return el.getAttribute("value");
+    `);
+  }
+
+  async attributeLocator(query: LocatorQuery, name: string) {
+    return this.evalOnLocator<string | null>(query, false, `
+      if (!el || !(el instanceof Element)) {
+        return null;
+      }
+      return el.getAttribute(${JSON.stringify(name)});
+    `);
+  }
+
+  async classesLocator(query: LocatorQuery) {
+    return this.evalOnLocator<string[] | null>(query, false, `
+      if (!el) {
+        return null;
+      }
+      if (!el.classList) {
+        return [];
+      }
+      return Array.from(el.classList);
+    `);
+  }
+
+  async cssLocator(query: LocatorQuery, property: string) {
+    return this.evalOnLocator<string | null>(query, false, `
+      if (!el) {
+        return null;
+      }
+      const style = window.getComputedStyle(el);
+      return style.getPropertyValue(${JSON.stringify(property)}) || "";
+    `);
+  }
+
+  async hasFocusLocator(query: LocatorQuery) {
+    return this.evalOnLocator<boolean | null>(query, false, `
+      if (!el) {
+        return null;
+      }
+      return document.activeElement === el;
+    `);
+  }
+
+  async isInViewportLocator(query: LocatorQuery, fully = false) {
+    return this.evalOnLocator<boolean | null>(query, false, `
+      if (!el) {
+        return null;
+      }
+      const rect = el.getBoundingClientRect();
+      const viewWidth = window.innerWidth || document.documentElement.clientWidth;
+      const viewHeight = window.innerHeight || document.documentElement.clientHeight;
+      if (${fully ? "true" : "false"}) {
+        return rect.top >= 0 && rect.left >= 0 && rect.bottom <= viewHeight && rect.right <= viewWidth;
+      }
+      return rect.bottom > 0 && rect.right > 0 && rect.top < viewHeight && rect.left < viewWidth;
+    `);
+  }
+
+  async isEditableLocator(query: LocatorQuery) {
+    return this.evalOnLocator<boolean | null>(query, false, `
+      if (!el) {
+        return null;
+      }
+      const disabled = Boolean(el.disabled) || el.hasAttribute("disabled");
+      const readOnly = Boolean(el.readOnly) || el.hasAttribute("readonly");
+      const ariaDisabled = el.getAttribute && el.getAttribute("aria-disabled") === "true";
+      return !(disabled || readOnly || ariaDisabled);
+    `);
+  }
+
+  async countLocator(query: LocatorQuery) {
+    return this.evalOnLocator<number>(query, true, `
+      return elements.length;
+    `);
+  }
+
   async text(selector: string, options: FrameSelectorOptions = {}) {
     return this.evalOnSelector<string | null>(selector, options, false, `
       if (!el) {
@@ -735,6 +947,273 @@ export class Frame {
       const ariaDisabled = el.getAttribute && el.getAttribute("aria-disabled") === "true";
       return !(disabled || readOnly || ariaDisabled);
     `);
+  }
+
+  private async performClickLocator(query: LocatorQuery, options: ClickOptions, isDouble: boolean) {
+    const start = Date.now();
+    const actionName = isDouble ? "dblclick" : "click";
+    const description = this.locatorDescription(query);
+    this.events.emit("action:start", { name: actionName, selector: description, frameId: this.id });
+    const box = await waitFor(async () => {
+      const result = await this.resolveLocatorElementBox(query, options);
+      if (!result || !result.visible) {
+        return null;
+      }
+      return result;
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `${actionName} ${description}` });
+
+    const centerX = box.x + box.width / 2;
+    const centerY = box.y + box.height / 2;
+    await this.session.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: centerX, y: centerY });
+    await this.session.send("Input.dispatchMouseEvent", { type: "mousePressed", x: centerX, y: centerY, button: "left", clickCount: 1, buttons: 1 });
+    await this.session.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: centerX, y: centerY, button: "left", clickCount: 1, buttons: 0 });
+
+    if (isDouble) {
+      await this.session.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: centerX, y: centerY });
+      await this.session.send("Input.dispatchMouseEvent", { type: "mousePressed", x: centerX, y: centerY, button: "left", clickCount: 2, buttons: 1 });
+      await this.session.send("Input.dispatchMouseEvent", { type: "mouseReleased", x: centerX, y: centerY, button: "left", clickCount: 2, buttons: 0 });
+    }
+
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: actionName, selector: description, frameId: this.id, durationMs: duration });
+    this.logger.debug("Click", description, `${duration}ms`);
+  }
+
+  private locatorDescription(query: LocatorQuery) {
+    switch (query.kind) {
+      case "selector":
+        return query.selector;
+      case "text":
+        return typeof query.text === "string" ? `text=${JSON.stringify(query.text)}` : `text=${query.text.toString()}`;
+      case "role":
+        return `role=${query.role}${query.options?.name ? ` name=${typeof query.options.name === "string" ? JSON.stringify(query.options.name) : query.options.name.toString()}` : ""}`;
+    }
+  }
+
+  private async resolveLocatorElementBox(query: LocatorQuery, options: { timeoutMs?: number }): Promise<ElementBox | null> {
+    return this.evalOnLocator(query, false, `
+      if (!el) {
+        return null;
+      }
+      el.scrollIntoView({ block: "center", inline: "center" });
+      const rect = el.getBoundingClientRect();
+      const style = window.getComputedStyle(el);
+      return {
+        x: rect.x,
+        y: rect.y,
+        width: rect.width,
+        height: rect.height,
+        visible: rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none" && Number(style.opacity || "1") > 0
+      };
+    `);
+  }
+
+  private async evalOnLocator<T>(query: LocatorQuery, all: boolean, body: string): Promise<T> {
+    const expression = this.buildLocatorExpression(query, body, all);
+    const params: Record<string, unknown> = {
+      expression,
+      returnByValue: true
+    };
+    if (this.contextId) {
+      params.contextId = this.contextId;
+    }
+    const result = await this.session.send<{ result: { value?: T } }>("Runtime.evaluate", params);
+    return result.result.value as T;
+  }
+
+  private buildLocatorExpression(query: LocatorQuery, body: string, all = false) {
+    const helpers = serializeShadowDomHelpers();
+    const serializedQuery = this.serializeLocatorQuery(query);
+    return `(function() {
+      const querySelectorAllDeep = ${helpers.querySelectorAllDeep};
+      const normalizeWhitespace = (value) => String(value ?? "").replace(/\\s+/g, " ").trim();
+      const cssEscape = (value) => {
+        if (typeof CSS !== "undefined" && CSS.escape) return CSS.escape(value);
+        return String(value).replace(/[^a-zA-Z0-9_-]/g, (c) => "\\\\" + c.charCodeAt(0).toString(16) + " ");
+      };
+      const textFromElement = (el) => {
+        if (!el) return "";
+        if (el instanceof HTMLInputElement) {
+          const type = (el.getAttribute("type") || "").toLowerCase();
+          if (type === "button" || type === "submit" || type === "reset" || type === "image") {
+            return el.value || el.getAttribute("alt") || "";
+          }
+        }
+        return el.textContent || "";
+      };
+      const isHidden = (el) => {
+        if (!el || !(el instanceof Element)) return true;
+        const style = window.getComputedStyle(el);
+        if (el.hidden || el.getAttribute("aria-hidden") === "true") return true;
+        return style.display === "none" || style.visibility === "hidden" || Number(style.opacity || "1") <= 0;
+      };
+      const getLabelText = (el) => {
+        if (!el || !(el instanceof Element)) return "";
+        const ariaLabel = el.getAttribute("aria-label");
+        if (ariaLabel) return normalizeWhitespace(ariaLabel);
+        const labelledBy = el.getAttribute("aria-labelledby");
+        if (labelledBy) {
+          const parts = labelledBy.split(/\\s+/).filter(Boolean).map((id) => document.getElementById(id)?.textContent || "");
+          const text = normalizeWhitespace(parts.join(" "));
+          if (text) return text;
+        }
+        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+          if (el.id) {
+            const label = document.querySelector("label[for=\"" + cssEscape(el.id) + "\"]");
+            if (label) {
+              const text = normalizeWhitespace(label.textContent || "");
+              if (text) return text;
+            }
+          }
+          const wrap = el.closest("label");
+          if (wrap) {
+            const text = normalizeWhitespace(wrap.textContent || "");
+            if (text) return text;
+          }
+        }
+        if (el instanceof HTMLImageElement) {
+          return normalizeWhitespace(el.getAttribute("alt") || el.getAttribute("title") || "");
+        }
+        return normalizeWhitespace(el.getAttribute("title") || "");
+      };
+      const getImplicitRole = (el) => {
+        if (!el || !(el instanceof Element)) return "";
+        const explicitRole = (el.getAttribute("role") || "").trim().split(/\\s+/)[0];
+        if (explicitRole) return explicitRole;
+        const tag = el.tagName.toLowerCase();
+        if (tag === "button") return "button";
+        if (tag === "summary") return "button";
+        if (tag === "a" && el.hasAttribute("href")) return "link";
+        if (tag === "input") {
+          const type = (el.getAttribute("type") || "text").toLowerCase();
+          if (type === "checkbox") return "checkbox";
+          if (type === "radio") return "radio";
+          if (type === "range") return "slider";
+          if (type === "submit" || type === "button" || type === "reset") return "button";
+          if (type === "file") return "button";
+          return "textbox";
+        }
+        if (tag === "textarea") return "textbox";
+        if (tag === "select") return "combobox";
+        if (tag === "img") return "img";
+        if (tag === "ul" || tag === "ol") return "list";
+        if (tag === "li") return "listitem";
+        if (tag === "table") return "table";
+        if (tag === "tr") return "row";
+        if (tag === "td") return "cell";
+        if (tag === "th") return "columnheader";
+        if (/^h[1-6]$/.test(tag)) return "heading";
+        if (tag === "option") return "option";
+        if (tag === "fieldset") return "group";
+        if (tag === "form") return "form";
+        if (el.hasAttribute("contenteditable")) return "textbox";
+        return explicitRole;
+      };
+      const matchText = (actual, expected, exact) => {
+        const normalizedActual = normalizeWhitespace(actual);
+        if (expected && expected.kind === "regex") {
+          const regex = new RegExp(expected.source, expected.flags);
+          return regex.test(normalizedActual);
+        }
+        const normalizedExpected = normalizeWhitespace(expected.value);
+        if (exact) {
+          return normalizedActual === normalizedExpected;
+        }
+        return normalizedActual.toLowerCase().includes(normalizedExpected.toLowerCase());
+      };
+      const matchName = (actual, expected, exact) => {
+        const normalizedActual = normalizeWhitespace(actual);
+        if (expected && expected.kind === "regex") {
+          const regex = new RegExp(expected.source, expected.flags);
+          return regex.test(normalizedActual);
+        }
+        const normalizedExpected = normalizeWhitespace(expected.value);
+        if (exact) {
+          return normalizedActual === normalizedExpected;
+        }
+        return normalizedActual.toLowerCase().includes(normalizedExpected.toLowerCase());
+      };
+      const query = ${serializedQuery};
+      const nodes = Array.from(querySelectorAllDeep(document, "*"));
+      const selectorMatches = () => {
+        if (query.kind !== "selector") {
+          return [];
+        }
+        if (query.selector.includes(">>>")) {
+          return querySelectorAllDeep(document, query.selector);
+        }
+        if (query.parsed?.type === "xpath") {
+          const result = document.evaluate(query.parsed.value, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+          const list = [];
+          for (let i = 0; i < result.snapshotLength; i += 1) {
+            const item = result.snapshotItem(i);
+            if (item instanceof Element) {
+              list.push(item);
+            }
+          }
+          return list;
+        }
+        return Array.from(document.querySelectorAll(query.selector));
+      };
+      const selectorMatchSet = selectorMatches();
+      const matches = nodes.filter((el) => {
+        if (!(el instanceof Element)) return false;
+        if (query.kind === "selector") {
+          return selectorMatchSet.includes(el);
+        }
+        if (query.kind === "text") {
+          const text = textFromElement(el);
+          return matchText(text, query.text, Boolean(query.options?.exact));
+        }
+        const role = getImplicitRole(el);
+        if (!role || role !== query.role) {
+          return false;
+        }
+        if (!query.options?.includeHidden && isHidden(el)) {
+          return false;
+        }
+        if (query.options?.name == null) {
+          return true;
+        }
+        const name = getLabelText(el) || textFromElement(el);
+        return matchName(name, query.options.name, Boolean(query.options?.exact));
+      });
+      const textMatches = query.kind === "text"
+        ? matches.filter((el) => !matches.some((other) => other !== el && el.contains(other)))
+        : matches;
+      const elements = ${all ? "textMatches" : "textMatches.slice(0, 1)"};
+      const el = elements[0] || null;
+      ${body}
+    })()`;
+  }
+
+  private serializeLocatorQuery(query: LocatorQuery) {
+    switch (query.kind) {
+      case "selector":
+        return JSON.stringify({ kind: "selector", selector: query.selector, options: query.options, parsed: parseSelector(query.selector) });
+      case "text":
+        return JSON.stringify({
+          kind: "text",
+          text: this.serializeTextQuery(query.text),
+          options: query.options
+        });
+      case "role":
+        return JSON.stringify({
+          kind: "role",
+          role: query.role,
+          options: query.options ? {
+            ...query.options,
+            name: query.options.name != null ? this.serializeTextQuery(query.options.name) : undefined
+          } : undefined
+        });
+    }
+  }
+
+  private serializeTextQuery(text: string | RegExp) {
+    if (text instanceof RegExp) {
+      return { kind: "regex", source: text.source, flags: text.flags.replace("g", "") };
+    }
+    return { kind: "string", value: text };
   }
 
   private async performClick(selector: string, options: ClickOptions, isDouble: boolean) {

@@ -4,7 +4,6 @@ import { Session } from "../cdp/Session.js";
 import { Logger } from "../logging/Logger.js";
 import { AutomationEvents } from "./Events.js";
 import { Frame } from "./Frame.js";
-import { Locator } from "./Locator.js";
 import { ensureAllowedUrl } from "./UrlGuard.js";
 import { waitFor } from "./Waiter.js";
 
@@ -102,7 +101,15 @@ export class Page {
   }
 
   locator(selector: string) {
-    return new Locator(this.mainFrame(), selector);
+    return this.mainFrame().locator(selector);
+  }
+
+  getByText(text: string | RegExp, options: { exact?: boolean; timeoutMs?: number } = {}) {
+    return this.mainFrame().getByText(text, options);
+  }
+
+  getByRole(role: string, options: { name?: string | RegExp; exact?: boolean; includeHidden?: boolean; timeoutMs?: number } = {}) {
+    return this.mainFrame().getByRole(role, options);
   }
 
   async goto(url: string, options: GotoOptions = {}) {
