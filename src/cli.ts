@@ -30,12 +30,17 @@ Download options:
   --mirror <url>           Custom mirror base URL
   --url <url>              Exact zip URL override
 
+Common options:
+  --headless               Run in headless mode (default for screenshot, pdf, eval)
+  --headed                 Run in headed mode (default for open)
+
 Screenshot options:
   -o, --output <file>      Output file path (required)
   --full-page              Capture full scrollable page
 
 PDF options:
-  -o, --output <file>      Output file path (required)`);
+  -o, --output <file>      Output file path (required)
+  Note: pdf always runs headless (CDP limitation)`);
 }
 
 function hasFlag(args: string[], flag: string): boolean {
@@ -49,6 +54,12 @@ function flagValue(args: string[], flag: string): string | undefined {
 }
 
 const VALUE_FLAGS = ["--mirror", "--url", "-o", "--output"];
+
+function resolveHeadless(args: string[], defaultValue: boolean): boolean {
+  if (hasFlag(args, "--headed")) return false;
+  if (hasFlag(args, "--headless")) return true;
+  return defaultValue;
+}
 
 function positionalArgs(args: string[]): string[] {
   const result: string[] = [];
@@ -104,13 +115,14 @@ async function cmdOpen(rest: string[]) {
     process.exit(1);
   }
 
+  const headless = resolveHeadless(rest, false);
   const args: string[] = [];
   if (process.platform === "linux") {
     args.push("--no-sandbox", "--no-zygote", "--disable-dev-shm-usage");
   }
 
   const browser = await automaton.launch({
-    headless: false,
+    headless,
     args,
     logLevel: "warn",
   });
@@ -144,9 +156,10 @@ async function cmdScreenshot(rest: string[]) {
     process.exit(1);
   }
   const fullPage = hasFlag(rest, "--full-page");
+  const headless = resolveHeadless(rest, true);
   const format = output.endsWith(".jpeg") || output.endsWith(".jpg") ? "jpeg" as const : "png" as const;
 
-  await withPage(url, {}, async (page) => {
+  await withPage(url, { headless }, async (page) => {
     await page.screenshot({ path: output, format, fullPage });
   });
 
@@ -177,7 +190,9 @@ async function cmdEval(rest: string[]) {
     process.exit(1);
   }
 
-  await withPage(url, {}, async (page) => {
+  const headless = resolveHeadless(rest, true);
+
+  await withPage(url, { headless }, async (page) => {
     const result = await page.evaluate(script);
     const output = result === undefined ? "undefined" : JSON.stringify(result, null, 2);
     console.log(output);
