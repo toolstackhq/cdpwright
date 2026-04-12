@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import os from "os";
+import http from "http";
 import https from "https";
 import { spawn } from "child_process";
 import yauzl from "yauzl";
@@ -48,11 +49,24 @@ export function chromiumExecutableRelativePath(platform: Platform) {
   return path.join("chrome-win", "chrome.exe");
 }
 
+function httpGet(url: string): typeof https {
+  return url.startsWith("http://") ? http as any : https;
+}
+
+function resolveSnapshotBase(): string {
+  const mirror = process.env.CDPWRIGHT_DOWNLOAD_MIRROR;
+  if (mirror && mirror.trim()) {
+    return mirror.trim().replace(/\/+$/, "");
+  }
+  return SNAPSHOT_BASE;
+}
+
 export async function fetchLatestRevision(platform: Platform): Promise<string> {
+  const base = resolveSnapshotBase();
   const folder = platformFolder(platform);
-  const url = `${SNAPSHOT_BASE}/${folder}/LAST_CHANGE`;
+  const url = `${base}/${folder}/LAST_CHANGE`;
   return new Promise((resolve, reject) => {
-    https.get(url, (res) => {
+    httpGet(url).get(url, (res) => {
       if (res.statusCode && res.statusCode >= 400) {
         reject(new Error(`Failed to fetch LAST_CHANGE: ${res.statusCode}`));
         return;
@@ -89,7 +103,10 @@ export async function ensureDownloaded(options: DownloadOptions) {
 
   const folder = platformFolder(platform);
   const zipName = platform === "win" ? "chrome-win.zip" : platform === "mac" ? "chrome-mac.zip" : "chrome-linux.zip";
-  const downloadUrl = `${SNAPSHOT_BASE}/${folder}/${revision}/${zipName}`;
+
+  const explicitUrl = process.env.CDPWRIGHT_DOWNLOAD_URL?.trim();
+  const base = resolveSnapshotBase();
+  const downloadUrl = explicitUrl || `${base}/${folder}/${revision}/${zipName}`;
 
   const tempZipPath = path.join(os.tmpdir(), `cdpwright-${platform}-${revision}.zip`);
 
@@ -111,7 +128,7 @@ export async function ensureDownloaded(options: DownloadOptions) {
 function downloadFile(url: string, dest: string, logger: Logger): Promise<void> {
   return new Promise((resolve, reject) => {
     const file = fs.createWriteStream(dest);
-    https.get(url, (res) => {
+    httpGet(url).get(url, (res) => {
       if (res.statusCode && res.statusCode >= 400) {
         reject(new Error(`Failed to download: ${res.statusCode}`));
         return;
