@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import os from "os";
 import { fileURLToPath } from "url";
 import { ChromiumManager } from "./browser/ChromiumManager.js";
 import { automaton } from "./index.js";
@@ -13,17 +14,69 @@ import {
 import type { Browser } from "./core/Browser.js";
 import type { Page } from "./core/Page.js";
 
+// --- Session file ---
+
+function sessionFilePath(): string {
+  const platform = detectPlatform();
+  const cacheRoot = defaultCacheRoot(platform);
+  return path.join(cacheRoot, "session.json");
+}
+
+type SessionInfo = { wsEndpoint: string; pid: number };
+
+function writeSession(info: SessionInfo) {
+  const filePath = sessionFilePath();
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, JSON.stringify(info));
+}
+
+function readSession(): SessionInfo | null {
+  const filePath = sessionFilePath();
+  if (!fs.existsSync(filePath)) return null;
+  try {
+    const data = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+    if (!data.wsEndpoint || !data.pid) return null;
+    // Check if the process is still alive
+    try {
+      process.kill(data.pid, 0);
+    } catch {
+      clearSession();
+      return null;
+    }
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function clearSession() {
+  const filePath = sessionFilePath();
+  try {
+    fs.unlinkSync(filePath);
+  } catch {
+    // ignore
+  }
+}
+
+// --- Helpers ---
+
 function printHelp() {
   console.log(`cdpwright (cpw) — Chromium automation CLI
 
 Commands:
   download [options]       Download pinned Chromium snapshot
   install                  Alias for download
-  open <url>               Launch headed browser and navigate to URL
-  screenshot <url> -o f    Take a screenshot (PNG/JPEG)
-  pdf <url> -o file.pdf    Generate PDF of page (headless only)
-  eval <url> <script>      Run script in page, print result as JSON
+  open <url>               Launch browser session and navigate to URL
+  close                    Close the running browser session
+  screenshot [url] -o f    Take a screenshot (PNG/JPEG)
+  html [url] -o file.html  Save the page HTML source
+  pdf [url] -o file.pdf    Generate PDF of page (headless only)
+  eval [url] <script>      Run script in page, print result as JSON
   version                  Print cdpwright and Chromium versions
+
+Session:
+  'open' starts a browser and saves a session. Other commands auto-connect
+  to the running session when no URL is given. 'close' shuts it down.
 
 Download options:
   --latest                 Download the latest Chromium revision
@@ -73,18 +126,55 @@ function positionalArgs(args: string[]): string[] {
   return result;
 }
 
-async function withPage<T>(
-  url: string,
-  options: { headless?: boolean },
-  fn: (page: Page, browser: Browser) => Promise<T>
-): Promise<T> {
+function launchArgs(): string[] {
   const args: string[] = [];
   if (process.platform === "linux") {
     args.push("--no-sandbox", "--no-zygote", "--disable-dev-shm-usage");
   }
+  return args;
+}
+
+function pngDimensions(buffer: Buffer): { width: number; height: number } {
+  if (buffer.length < 24) {
+    throw new Error("Invalid PNG screenshot");
+  }
+  if (buffer.readUInt32BE(0) !== 0x89504e47 || buffer.readUInt32BE(4) !== 0x0d0a1a0a) {
+    throw new Error("Invalid PNG screenshot");
+  }
+  return {
+    width: buffer.readUInt32BE(16),
+    height: buffer.readUInt32BE(20),
+  };
+}
+
+/** Connect to running session. Returns browser + the first page. */
+async function connectToSession(): Promise<{ browser: Browser; page: Page }> {
+  const session = readSession();
+  if (!session) {
+    console.error("No running session. Start one with: cpw open <url>");
+    process.exit(1);
+  }
+  const browser = await automaton.connect(session.wsEndpoint);
+  const targets = await browser.pages();
+  if (targets.length === 0) {
+    console.error("Session has no open pages.");
+    await browser.disconnect();
+    process.exit(1);
+  }
+  const page = await browser.attachPage(targets[0].targetId);
+  return { browser, page };
+}
+
+/** Launch standalone browser, navigate, run fn, close. */
+async function withPage<T>(
+  url: string,
+  options: { headless?: boolean; maximize?: boolean },
+  fn: (page: Page, browser: Browser) => Promise<T>
+): Promise<T> {
   const browser = await automaton.launch({
     headless: options.headless ?? true,
-    args,
+    maximize: options.maximize ?? false,
+    args: launchArgs(),
     logLevel: "warn",
   });
   try {
@@ -116,22 +206,28 @@ async function cmdOpen(rest: string[]) {
   }
 
   const headless = resolveHeadless(rest, false);
-  const args: string[] = [];
-  if (process.platform === "linux") {
-    args.push("--no-sandbox", "--no-zygote", "--disable-dev-shm-usage");
-  }
 
   const browser = await automaton.launch({
     headless,
-    args,
+    args: launchArgs(),
     logLevel: "warn",
   });
 
   const page = await browser.newPage();
   await page.goto(url, { waitUntil: "load" });
 
+  // Save session so other terminals can connect
+  writeSession({
+    wsEndpoint: browser.wsEndpoint,
+    pid: browser.pid || process.pid,
+  });
+
   console.log(`Browser open at ${url}`);
-  console.log("Press Ctrl+C to close.");
+  console.log(`Session saved. Run commands in another terminal:`);
+  console.log(`  npx cpw screenshot -o shot.png`);
+  console.log(`  npx cpw eval "document.title"`);
+  console.log(`  npx cpw close`);
+  console.log(`\nPress Ctrl+C to close.`);
 
   await new Promise<void>((resolve) => {
     process.on("SIGINT", () => {
@@ -141,6 +237,7 @@ async function cmdOpen(rest: string[]) {
     process.on("SIGTERM", () => resolve());
   });
 
+  clearSession();
   try {
     await browser.close();
   } catch {
@@ -148,55 +245,217 @@ async function cmdOpen(rest: string[]) {
   }
 }
 
+async function cmdClose() {
+  const session = readSession();
+  if (!session) {
+    console.error("No running session.");
+    process.exit(1);
+  }
+  try {
+    const browser = await automaton.connect(session.wsEndpoint);
+    await browser.close();
+  } catch {
+    // kill the process directly if CDP fails
+    try {
+      process.kill(session.pid, "SIGTERM");
+    } catch {
+      // ignore
+    }
+  }
+  clearSession();
+  console.log("Session closed.");
+}
+
 async function cmdScreenshot(rest: string[]) {
-  const url = positionalArgs(rest)[0];
+  const pos = positionalArgs(rest);
+  const url = pos[0];
   const output = flagValue(rest, "-o") || flagValue(rest, "--output");
-  if (!url || !output) {
-    console.error("Usage: cpw screenshot <url> -o <file> [--full-page]");
+  if (!output) {
+    console.error("Usage: cpw screenshot [url] -o <file> [--full-page]");
     process.exit(1);
   }
   const fullPage = hasFlag(rest, "--full-page");
-  const headless = resolveHeadless(rest, true);
   const format = output.endsWith(".jpeg") || output.endsWith(".jpg") ? "jpeg" as const : "png" as const;
 
-  await withPage(url, { headless }, async (page) => {
-    await page.screenshot({ path: output, format, fullPage });
-  });
+  if (url) {
+    // Standalone: launch, screenshot, close
+    const headless = resolveHeadless(rest, true);
+    await withPage(url, { headless }, async (page) => {
+      await page.screenshot({ path: output, format, fullPage });
+    });
+  } else {
+    // Session: connect to running browser
+    const { browser, page } = await connectToSession();
+    try {
+      await page.screenshot({ path: output, format, fullPage });
+    } finally {
+      await browser.disconnect();
+    }
+  }
 
   console.log(`Screenshot saved to ${output}`);
 }
 
-async function cmdPdf(rest: string[]) {
-  const url = positionalArgs(rest)[0];
+async function cmdHtml(rest: string[]) {
+  const pos = positionalArgs(rest);
+  const url = pos[0];
   const output = flagValue(rest, "-o") || flagValue(rest, "--output");
-  if (!url || !output) {
-    console.error("Usage: cpw pdf <url> -o <file>");
+  if (!output) {
+    console.error("Usage: cpw html [url] -o <file>");
     process.exit(1);
   }
 
-  await withPage(url, { headless: true }, async (page) => {
-    await page.pdf({ path: output, printBackground: true });
-  });
+  const writeHtml = async (page: Page) => {
+    const html = await page.content();
+    fs.writeFileSync(path.resolve(output), html, "utf-8");
+  };
+
+  if (url) {
+    const headless = resolveHeadless(rest, true);
+    await withPage(url, { headless }, async (page) => {
+      await writeHtml(page);
+    });
+  } else {
+    const { browser, page } = await connectToSession();
+    try {
+      await writeHtml(page);
+    } finally {
+      await browser.disconnect();
+    }
+  }
+
+  console.log(`HTML saved to ${output}`);
+}
+
+async function cmdPdf(rest: string[]) {
+  const pos = positionalArgs(rest);
+  const url = pos[0];
+  const output = flagValue(rest, "-o") || flagValue(rest, "--output");
+  if (!output) {
+    console.error("Usage: cpw pdf [url] -o <file>");
+    process.exit(1);
+  }
+
+  const renderVisualPdf = async (browser: Browser, page: Page) => {
+    // Print a screenshot-backed helper page so the PDF matches what the user sees on screen.
+    const screenshot = await page.screenshotBase64({ format: "png" });
+    const screenshotSize = pngDimensions(Buffer.from(screenshot, "base64"));
+    const context = await browser.newContext();
+    try {
+      const helperPage = await context.newPage();
+      const imageDataUrl = `data:image/png;base64,${screenshot}`;
+      const screenshotDimensions = await helperPage.evaluate<{ width: number; height: number }>((dataUrl) => {
+        document.open();
+        document.write(`<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background: #fff;
+      }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <img id="shot" alt="page screenshot">
+  </body>
+</html>`);
+        document.close();
+        const img = document.getElementById("shot");
+        if (!(img instanceof HTMLImageElement)) {
+          throw new Error("Failed to create PDF preview image");
+        }
+        return new Promise<{ width: number; height: number }>((resolve, reject) => {
+          img.onload = () => {
+            resolve({ width: img.naturalWidth || 0, height: img.naturalHeight || 0 });
+          };
+          img.onerror = () => reject(new Error("Failed to load screenshot image"));
+          img.src = dataUrl;
+        });
+      }, imageDataUrl);
+
+      await helperPage.pdf({
+        path: output,
+        printBackground: true,
+        paperWidth: Math.max((screenshotDimensions?.width ?? screenshotSize.width) / 96, 1),
+        paperHeight: Math.max((screenshotDimensions?.height ?? screenshotSize.height) / 96, 1),
+        marginTop: 0,
+        marginBottom: 0,
+        marginLeft: 0,
+        marginRight: 0,
+        scale: 1,
+        preferCSSPageSize: false,
+      });
+    } finally {
+      await context.close();
+    }
+  };
+
+  if (url) {
+    await withPage(url, { headless: true, maximize: true }, async (page, browser) => {
+      await renderVisualPdf(browser, page);
+    });
+  } else {
+    const { browser, page } = await connectToSession();
+    try {
+      await renderVisualPdf(browser, page);
+    } finally {
+      await browser.disconnect();
+    }
+  }
 
   console.log(`PDF saved to ${output}`);
 }
 
 async function cmdEval(rest: string[]) {
   const pos = positionalArgs(rest);
-  const url = pos[0];
-  const script = pos[1];
-  if (!url || !script) {
-    console.error("Usage: cpw eval <url> <script>");
+
+  // If session exists and only one positional arg, treat it as script (no URL)
+  const session = readSession();
+  let url: string | undefined;
+  let script: string;
+
+  if (pos.length >= 2) {
+    url = pos[0];
+    script = pos[1];
+  } else if (pos.length === 1 && session) {
+    script = pos[0];
+  } else if (pos.length === 1) {
+    // No session, treat as error — need URL
+    console.error("Usage: cpw eval <url> <script>\n       cpw eval <script>   (when a session is running)");
     process.exit(1);
+    return; // unreachable but satisfies TS
+  } else {
+    console.error("Usage: cpw eval [url] <script>");
+    process.exit(1);
+    return;
   }
 
-  const headless = resolveHeadless(rest, true);
-
-  await withPage(url, { headless }, async (page) => {
-    const result = await page.evaluate(script);
-    const output = result === undefined ? "undefined" : JSON.stringify(result, null, 2);
-    console.log(output);
-  });
+  if (url) {
+    const headless = resolveHeadless(rest, true);
+    await withPage(url, { headless }, async (page) => {
+      const result = await page.evaluate(script);
+      const output = result === undefined ? "undefined" : JSON.stringify(result, null, 2);
+      console.log(output);
+    });
+  } else {
+    const { browser, page } = await connectToSession();
+    try {
+      const result = await page.evaluate(script);
+      const output = result === undefined ? "undefined" : JSON.stringify(result, null, 2);
+      console.log(output);
+    } finally {
+      await browser.disconnect();
+    }
+  }
 }
 
 async function cmdVersion() {
@@ -227,6 +486,11 @@ async function cmdVersion() {
   } else {
     console.log("Chromium: not installed (run 'cpw install')");
   }
+
+  const session = readSession();
+  if (session) {
+    console.log(`Session: active (pid ${session.pid})`);
+  }
 }
 
 // --- Main ---
@@ -245,8 +509,12 @@ async function main() {
       return cmdDownload(rest);
     case "open":
       return cmdOpen(rest);
+    case "close":
+      return cmdClose();
     case "screenshot":
       return cmdScreenshot(rest);
+    case "html":
+      return cmdHtml(rest);
     case "pdf":
       return cmdPdf(rest);
     case "eval":

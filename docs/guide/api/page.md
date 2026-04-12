@@ -63,6 +63,14 @@ await page.screenshot({ path: "page.png" });
 const base64 = await page.screenshotBase64();
 ```
 
+## HTML source
+
+```ts
+const html = await page.content();
+```
+
+`content()` waits for the page to finish loading, then returns the full document HTML with the doctype prefix.
+
 ## Frames
 
 ```ts

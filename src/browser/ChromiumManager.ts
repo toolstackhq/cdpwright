@@ -146,6 +146,7 @@ export class ChromiumManager {
     }
     if (options.maximize) {
       args.push("--start-maximized");
+      args.push("--window-size=1920,1080");
     }
     if (options.args) {
       args.push(...options.args);
@@ -177,7 +178,7 @@ export class ChromiumManager {
         logger.info(`Assertion ${payload.name}`, ...args);
       });
     }
-    const browser = new Browser(connection, child, logger, events, cleanupTasks);
+    const browser = new Browser(connection, child, logger, events, cleanupTasks, wsEndpoint);
 
     return browser;
   }

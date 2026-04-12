@@ -6,6 +6,7 @@ import { AutomationEvents } from "./Events.js";
 import { Frame } from "./Frame.js";
 import { Locator } from "./Locator.js";
 import { ensureAllowedUrl } from "./UrlGuard.js";
+import { waitFor } from "./Waiter.js";
 
 export type GotoOptions = {
   waitUntil?: "domcontentloaded" | "load";
@@ -34,6 +35,12 @@ export type PdfOptions = {
   pageRanges?: string;
   preferCSSPageSize?: boolean;
 };
+
+function assertPdfBuffer(buffer: Buffer) {
+  if (buffer.length < 5 || buffer.subarray(0, 5).toString("utf-8") !== "%PDF-") {
+    throw new Error("PDF generation failed: Chromium did not return a valid PDF");
+  }
+}
 
 export class Page {
   private session: Session;
@@ -181,9 +188,21 @@ export class Page {
     return this.mainFrame().findLocators(options);
   }
 
+  async content(): Promise<string> {
+    await this.waitForLoad();
+    return this.mainFrame().evaluate<string>(() => {
+      const doctype = document.doctype;
+      const doctypeText = doctype
+        ? `<!DOCTYPE ${doctype.name}${doctype.publicId ? ` PUBLIC "${doctype.publicId}"` : ""}${doctype.systemId ? ` "${doctype.systemId}"` : ""}>`
+        : "<!doctype html>";
+      return `${doctypeText}\n${document.documentElement.outerHTML}`;
+    });
+  }
+
   async screenshot(options: ScreenshotOptions = {}) {
     const start = Date.now();
     this.events.emit("action:start", { name: "screenshot", frameId: this.mainFrameId });
+    await this.waitForLoad();
     const result = await this.session.send<{ data: string }>("Page.captureScreenshot", {
       format: options.format ?? "png",
       quality: options.quality,
@@ -203,6 +222,7 @@ export class Page {
   async screenshotBase64(options: Omit<ScreenshotOptions, "path"> = {}) {
     const start = Date.now();
     this.events.emit("action:start", { name: "screenshotBase64", frameId: this.mainFrameId });
+    await this.waitForLoad();
     const result = await this.session.send<{ data: string }>("Page.captureScreenshot", {
       format: options.format ?? "png",
       quality: options.quality,
@@ -217,27 +237,39 @@ export class Page {
   async pdf(options: PdfOptions = {}): Promise<Buffer> {
     const start = Date.now();
     this.events.emit("action:start", { name: "pdf", frameId: this.mainFrameId });
-    const result = await this.session.send<{ data: string }>("Page.printToPDF", {
-      landscape: options.landscape ?? false,
-      printBackground: options.printBackground ?? true,
-      scale: options.scale,
-      paperWidth: options.paperWidth,
-      paperHeight: options.paperHeight,
-      marginTop: options.marginTop,
-      marginBottom: options.marginBottom,
-      marginLeft: options.marginLeft,
-      marginRight: options.marginRight,
-      pageRanges: options.pageRanges,
-      preferCSSPageSize: options.preferCSSPageSize,
-    });
-    const buffer = Buffer.from(result.data, "base64");
-    if (options.path) {
-      const resolved = path.resolve(options.path);
-      fs.writeFileSync(resolved, buffer);
+    await this.waitForLoad();
+    await this.session.send("Emulation.setEmulatedMedia", { media: "screen" });
+    let buffer: Buffer;
+    try {
+      const result = await this.session.send<{ data: string }>("Page.printToPDF", {
+        landscape: options.landscape ?? false,
+        printBackground: options.printBackground ?? true,
+        scale: options.scale,
+        paperWidth: options.paperWidth,
+        paperHeight: options.paperHeight,
+        marginTop: options.marginTop,
+        marginBottom: options.marginBottom,
+        marginLeft: options.marginLeft,
+        marginRight: options.marginRight,
+        pageRanges: options.pageRanges,
+        preferCSSPageSize: options.preferCSSPageSize,
+      });
+      buffer = Buffer.from(result.data, "base64");
+      assertPdfBuffer(buffer);
+      if (options.path) {
+        const resolved = path.resolve(options.path);
+        fs.writeFileSync(resolved, buffer);
+      }
+    } finally {
+      try {
+        await this.session.send("Emulation.setEmulatedMedia", { media: "" });
+      } catch {
+        // ignore reset failures
+      }
+      const duration = Date.now() - start;
+      this.events.emit("action:end", { name: "pdf", frameId: this.mainFrameId, durationMs: duration });
     }
-    const duration = Date.now() - start;
-    this.events.emit("action:end", { name: "pdf", frameId: this.mainFrameId, durationMs: duration });
-    return buffer;
+    return buffer!;
   }
 
   getEvents() {
@@ -246,6 +278,14 @@ export class Page {
 
   getDefaultTimeout() {
     return this.defaultTimeout;
+  }
+
+  async waitForLoad(timeoutMs: number = this.defaultTimeout) {
+    const frame = this.mainFrame();
+    await waitFor(async () => {
+      const readyState = await frame.evaluate<string>("document.readyState");
+      return readyState === "complete";
+    }, { timeoutMs, description: "page load" });
   }
 
   private buildFrameTree(tree: { frame: { id: string; name?: string; url?: string; parentId?: string }; childFrames?: any[] }) {

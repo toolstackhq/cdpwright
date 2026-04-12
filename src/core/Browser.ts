@@ -29,18 +29,22 @@ export class BrowserContext {
 
 export class Browser {
   private connection: Connection;
-  private process: ChildProcess;
+  private process: ChildProcess | null;
   private logger: Logger;
   private events: AutomationEvents;
   private cleanupTasks: Array<() => void>;
   private contexts = new Set<string>();
+  readonly wsEndpoint: string;
+  readonly pid: number;
 
-  constructor(connection: Connection, child: ChildProcess, logger: Logger, events: AutomationEvents, cleanupTasks: Array<() => void> = []) {
+  constructor(connection: Connection, child: ChildProcess | null, logger: Logger, events: AutomationEvents, cleanupTasks: Array<() => void> = [], wsEndpoint: string = "") {
     this.connection = connection;
     this.process = child;
     this.logger = logger;
     this.events = events;
     this.cleanupTasks = cleanupTasks;
+    this.wsEndpoint = wsEndpoint;
+    this.pid = child?.pid ?? 0;
   }
 
   on(event: "action:start" | "action:end" | "assertion:start" | "assertion:end", handler: (payload: any) => void) {
@@ -66,6 +70,28 @@ export class Browser {
     return page;
   }
 
+  /** Attach to an existing page by target ID. */
+  async attachPage(targetId: string) {
+    const { sessionId } = await this.connection.send<{ sessionId: string }>("Target.attachToTarget", { targetId, flatten: true });
+    const session = this.connection.createSession(sessionId);
+    const page = new Page(session, this.logger, this.events);
+    await page.initialize();
+    return page;
+  }
+
+  /** List open page targets. */
+  async pages(): Promise<Array<{ targetId: string; url: string; title: string }>> {
+    const result = await this.connection.send<{ targetInfos: Array<{ targetId: string; type: string; url: string; title: string }> }>("Target.getTargets");
+    return result.targetInfos
+      .filter((t) => t.type === "page")
+      .map((t) => ({ targetId: t.targetId, url: t.url, title: t.title }));
+  }
+
+  /** Disconnect without killing the browser process. */
+  async disconnect() {
+    await this.connection.close();
+  }
+
   async disposeContext(contextId: string) {
     if (!contextId) return;
     try {
@@ -88,7 +114,7 @@ export class Browser {
       // ignore
     }
     await this.connection.close();
-    if (!this.process.killed) {
+    if (this.process && !this.process.killed) {
       this.process.kill();
     }
     for (const task of this.cleanupTasks) {
