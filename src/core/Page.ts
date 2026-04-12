@@ -17,6 +17,22 @@ export type ScreenshotOptions = {
   path?: string;
   format?: "png" | "jpeg";
   quality?: number;
+  fullPage?: boolean;
+};
+
+export type PdfOptions = {
+  path?: string;
+  landscape?: boolean;
+  printBackground?: boolean;
+  scale?: number;
+  paperWidth?: number;
+  paperHeight?: number;
+  marginTop?: number;
+  marginBottom?: number;
+  marginLeft?: number;
+  marginRight?: number;
+  pageRanges?: string;
+  preferCSSPageSize?: boolean;
 };
 
 export class Page {
@@ -171,7 +187,8 @@ export class Page {
     const result = await this.session.send<{ data: string }>("Page.captureScreenshot", {
       format: options.format ?? "png",
       quality: options.quality,
-      fromSurface: true
+      fromSurface: true,
+      captureBeyondViewport: options.fullPage ?? false
     });
     const buffer = Buffer.from(result.data, "base64");
     if (options.path) {
@@ -189,11 +206,38 @@ export class Page {
     const result = await this.session.send<{ data: string }>("Page.captureScreenshot", {
       format: options.format ?? "png",
       quality: options.quality,
-      fromSurface: true
+      fromSurface: true,
+      captureBeyondViewport: options.fullPage ?? false
     });
     const duration = Date.now() - start;
     this.events.emit("action:end", { name: "screenshotBase64", frameId: this.mainFrameId, durationMs: duration });
     return result.data;
+  }
+
+  async pdf(options: PdfOptions = {}): Promise<Buffer> {
+    const start = Date.now();
+    this.events.emit("action:start", { name: "pdf", frameId: this.mainFrameId });
+    const result = await this.session.send<{ data: string }>("Page.printToPDF", {
+      landscape: options.landscape ?? false,
+      printBackground: options.printBackground ?? true,
+      scale: options.scale,
+      paperWidth: options.paperWidth,
+      paperHeight: options.paperHeight,
+      marginTop: options.marginTop,
+      marginBottom: options.marginBottom,
+      marginLeft: options.marginLeft,
+      marginRight: options.marginRight,
+      pageRanges: options.pageRanges,
+      preferCSSPageSize: options.preferCSSPageSize,
+    });
+    const buffer = Buffer.from(result.data, "base64");
+    if (options.path) {
+      const resolved = path.resolve(options.path);
+      fs.writeFileSync(resolved, buffer);
+    }
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "pdf", frameId: this.mainFrameId, durationMs: duration });
+    return buffer;
   }
 
   getEvents() {
