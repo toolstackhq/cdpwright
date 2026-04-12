@@ -50,13 +50,31 @@ node quick.mjs
 - Queries: `query`, `queryAll`, `queryXPath`, `queryAllXPath`, `locator`
 - Assertions: `expect(page).element("selector").toBeVisible()` (see `docs/guide/assertions.md`)
 
-## Architecture at a glance (render-friendly)
-```
-CLI (cpw download) -> Downloader -> Chromium cache
+## Architecture
 
-User code -> chromium.launch -> ChromiumManager -> Chromium process
-Chromium process -> CDP connection -> Browser -> Page -> Frame
-Page -> Locator / expect
+```mermaid
+graph TD
+    subgraph CLI
+        CPW["cpw (CLI)"]
+    end
+
+    subgraph Library API
+        USER["User code"] -->|chromium.launch| MGR[ChromiumManager]
+        MGR -->|spawns| PROC[Chromium process]
+        PROC -->|WebSocket| CDP[CDP Session]
+        CDP --> BROWSER[Browser]
+        BROWSER --> CTX[BrowserContext]
+        CTX --> PAGE[Page]
+        PAGE --> FRAME[Frame]
+        FRAME --> LOC[Locator]
+        PAGE --> EXPECT["expect()"]
+    end
+
+    subgraph Download
+        CPW -->|cpw download| DL[Downloader]
+        DL -->|fetch + extract| CACHE["~/.cache/cdpwright"]
+        MGR -.->|resolve executable| CACHE
+    end
 ```
 
 ## Docs
