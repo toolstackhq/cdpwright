@@ -5,12 +5,16 @@ Chromium-only automation built on the Chrome DevTools Protocol (CDP). A lightwei
 ## Quick start
 
 ```bash
+mkdir my-project && cd my-project
+npm init -y
 npm install @toolstackhq/cdpwright
 npx cpw download    # downloads a pinned Chromium build
 ```
 
-```ts
-// quick.js
+Create `quick.mjs` (the `.mjs` extension enables ES modules — no config needed):
+
+```js
+// quick.mjs
 import { chromium, expect } from "@toolstackhq/cdpwright";
 
 const browser = await chromium.launch({ headless: true });
@@ -24,8 +28,11 @@ await browser.close();
 
 Run it:
 ```bash
-node quick.js
+node quick.mjs
 ```
+
+> **Tip:** If you prefer `.js` files, add `"type": "module"` to your `package.json`.
+> For TypeScript, just rename to `quick.ts` and run with `tsx quick.ts` or `npx ts-node --esm quick.ts`.
 
 ## Core ideas
 - CDP-only: no WebDriver, no playwright-core dependency.

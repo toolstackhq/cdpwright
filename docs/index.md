@@ -25,7 +25,8 @@ hero:
 
 ## Quick Example
 
-```ts
+```js
+// quick.mjs
 import { chromium, expect } from "@toolstackhq/cdpwright";
 
 const browser = await chromium.launch({ headless: true });
