@@ -13,6 +13,7 @@ export default defineConfig({
       "/guide/": [
         { text: "Introduction", link: "/guide/intro" },
         { text: "Getting Started", link: "/guide/getting-started" },
+        { text: "CLI", link: "/guide/cli" },
         {
           text: "API",
           link: "/guide/api/",
