@@ -1,0 +1,65 @@
+name: Chromium Revision Bump
+
+on:
+  schedule:
+    - cron: "0 23 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  bump-revision:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Update pinned Chromium revision
+        run: npm run update:chromium-revision
+
+      - name: Check for changes
+        id: diff
+        run: |
+          if git diff --quiet -- src/browser/Revision.ts; then
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build
+        if: steps.diff.outputs.updated == 'true'
+        run: npm run build
+
+      - name: Test
+        if: steps.diff.outputs.updated == 'true'
+        run: npm run test
+
+      - name: Typecheck
+        if: steps.diff.outputs.updated == 'true'
+        run: npm run typecheck
+
+      - name: Create pull request
+        if: steps.diff.outputs.updated == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/bump-chromium-revision
+          title: chore: bump Chromium revision
+          commit-message: chore: bump Chromium revision
+          body: |
+            Automated Chromium revision bump based on the latest snapshot LAST_CHANGE values.
+          delete-branch: true
+          add-paths: |
+            src/browser/Revision.ts
