@@ -51,10 +51,21 @@ jobs:
         if: steps.diff.outputs.updated == 'true'
         run: npm run typecheck
 
+      - name: Validate PR token
+        if: steps.diff.outputs.updated == 'true'
+        env:
+          CDPWRIGHT_PR_TOKEN: ${{ secrets.CDPWRIGHT_PR_TOKEN }}
+        run: |
+          if [ -z "${CDPWRIGHT_PR_TOKEN}" ]; then
+            echo "CDPWRIGHT_PR_TOKEN is not set. Add a repo secret with a PAT or bot token that can create pull requests."
+            exit 1
+          fi
+
       - name: Create pull request
         if: steps.diff.outputs.updated == 'true'
         uses: peter-evans/create-pull-request@v6
         with:
+          token: ${{ secrets.CDPWRIGHT_PR_TOKEN }}
           branch: chore/bump-chromium-revision
           title: "chore: bump Chromium revision"
           commit-message: "chore: bump Chromium revision"
