@@ -38,42 +38,62 @@ async function main() {
     return;
   }
 
-  const candidateRevisions = [...new Set(latestByTarget.map((entry) => entry.revision))]
-    .sort((left, right) => right - left)
-    .filter((revision) => revision > pinnedRevision);
-
-  for (const candidateRevision of candidateRevisions) {
-    const availability = await Promise.all(
-      TARGETS.map(async (target) => ({
-        ...target,
-        available: await snapshotExists(target.folder, candidateRevision, target.archive)
-      }))
-    );
-
-    const unavailableTargets = availability.filter((entry) => !entry.available);
-    if (unavailableTargets.length > 0) {
-      console.log(
-        `Revision ${candidateRevision} is not yet available for all supported platforms, skipping it: ${unavailableTargets
-          .map((entry) => entry.platform)
-          .join(", ")}`
-      );
-      continue;
-    }
-
-    const updatedSource = source.replace(
-      /(export const PINNED_REVISION = )"\d+";/,
-      `$1"${candidateRevision}";`
-    );
-    if (updatedSource === source) {
-      throw new Error("Could not locate PINNED_REVISION in src/browser/Revision.ts");
-    }
-
-    await fs.writeFile(REVISION_FILE, updatedSource);
-    console.log(`Updated pinned Chromium revision to ${candidateRevision}.`);
+  const candidateRevision = await findHighestSharedRevision(pinnedRevision + 1, highestObserved);
+  if (candidateRevision == null) {
+    console.log("No shared Chromium revision newer than the current pin is available yet.");
     return;
   }
 
-  console.log("No shared Chromium revision newer than the current pin is available yet.");
+  const updatedSource = source.replace(
+    /(export const PINNED_REVISION = )"\d+";/,
+    `$1"${candidateRevision}";`
+  );
+  if (updatedSource === source) {
+    throw new Error("Could not locate PINNED_REVISION in src/browser/Revision.ts");
+  }
+
+  await fs.writeFile(REVISION_FILE, updatedSource);
+  console.log(`Updated pinned Chromium revision to ${candidateRevision}.`);
+}
+
+async function findHighestSharedRevision(low, high) {
+  let left = low;
+  let right = high;
+  let best = null;
+
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+    const shared = await isSharedRevision(mid);
+    if (shared) {
+      best = mid;
+      left = mid + 1;
+    } else {
+      right = mid - 1;
+    }
+  }
+
+  return best;
+}
+
+async function isSharedRevision(revision) {
+  const availability = await Promise.all(
+    TARGETS.map(async (target) => ({
+      ...target,
+      available: await snapshotExists(target.folder, revision, target.archive)
+    }))
+  );
+
+  const unavailableTargets = availability.filter((entry) => !entry.available);
+  if (unavailableTargets.length > 0) {
+    console.log(
+      `Revision ${revision} is not yet available for all supported platforms, skipping it: ${unavailableTargets
+        .map((entry) => entry.platform)
+        .join(", ")}`
+    );
+    return false;
+  }
+
+  return true;
 }
 
 function parsePinnedRevision(source) {
