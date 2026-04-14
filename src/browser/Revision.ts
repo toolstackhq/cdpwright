@@ -1,4 +1,4 @@
-export const PINNED_REVISION = "1567454";
+export const PINNED_REVISION = "1614293";
 
 export function resolveRevision(envRevision?: string) {
   if (envRevision && envRevision.trim()) {
