@@ -56,8 +56,8 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           branch: chore/bump-chromium-revision
-          title: chore: bump Chromium revision
-          commit-message: chore: bump Chromium revision
+          title: "chore: bump Chromium revision"
+          commit-message: "chore: bump Chromium revision"
           body: |
             Automated Chromium revision bump based on the latest snapshot LAST_CHANGE values.
           delete-branch: true
