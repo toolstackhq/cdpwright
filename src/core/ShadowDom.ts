@@ -1,32 +1,27 @@
 type RootNode = Document | ShadowRoot | Element;
 
-function getElementCtor(root: RootNode): typeof Element | null {
-  if (typeof Element !== "undefined") return Element;
-  const doc = (root as Document | ShadowRoot | Element & { ownerDocument?: Document }).ownerDocument;
-  const view = (doc || (root as any)).defaultView;
-  return view?.Element ?? null;
-}
-
-function isElementNode(node: RootNode, ElementCtor: typeof Element): node is Element {
-  return node instanceof ElementCtor;
-}
-
-function nodeChildren(node: RootNode): Element[] {
-  if (!("children" in node)) {
-    return [];
-  }
-  return Array.from(node.children as unknown as Iterable<Element>);
-}
-
 export function querySelectorDeep(root: RootNode, selector: string): Element | null {
-  const ElementCtor = getElementCtor(root);
+  const ElementCtor = typeof Element !== "undefined"
+    ? Element
+    : ((root as Document | ShadowRoot | Element & { ownerDocument?: Document }).ownerDocument || (root as any)).defaultView?.Element ?? null;
   if (!ElementCtor) return null;
-  const elementCtor = ElementCtor;
+
+  function isElementNode(node: RootNode): node is Element {
+    return node instanceof ElementCtor;
+  }
+
+  function nodeChildren(node: RootNode): Element[] {
+    if (!("children" in node)) {
+      return [];
+    }
+    return Array.from(node.children as unknown as Iterable<Element>);
+  }
+
   function walk(node: RootNode, sel: string, results: Element[]) {
-    if (isElementNode(node, elementCtor) && node.matches(sel)) {
+    if (isElementNode(node) && node.matches(sel)) {
       results.push(node);
     }
-    if (isElementNode(node, elementCtor) && node.shadowRoot) {
+    if (isElementNode(node) && node.shadowRoot) {
       walk(node.shadowRoot, sel, results);
     }
     for (const child of nodeChildren(node)) {
@@ -58,14 +53,27 @@ export function querySelectorDeep(root: RootNode, selector: string): Element | n
 }
 
 export function querySelectorAllDeep(root: Document | ShadowRoot | Element, selector: string): Element[] {
-  const ElementCtor = getElementCtor(root);
+  const ElementCtor = typeof Element !== "undefined"
+    ? Element
+    : ((root as Document | ShadowRoot | Element & { ownerDocument?: Document }).ownerDocument || (root as any)).defaultView?.Element ?? null;
   if (!ElementCtor) return [];
-  const elementCtor = ElementCtor;
+
+  function isElementNode(node: RootNode): node is Element {
+    return node instanceof ElementCtor;
+  }
+
+  function nodeChildren(node: RootNode): Element[] {
+    if (!("children" in node)) {
+      return [];
+    }
+    return Array.from(node.children as unknown as Iterable<Element>);
+  }
+
   function walk(node: RootNode, sel: string, results: Element[]) {
-    if (isElementNode(node, elementCtor) && node.matches(sel)) {
+    if (isElementNode(node) && node.matches(sel)) {
       results.push(node);
     }
-    if (isElementNode(node, elementCtor) && node.shadowRoot) {
+    if (isElementNode(node) && node.shadowRoot) {
       walk(node.shadowRoot, sel, results);
     }
     for (const child of nodeChildren(node)) {

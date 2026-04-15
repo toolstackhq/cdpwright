@@ -5,6 +5,7 @@ import { chromium } from "../src/index.js";
 
 const runIntegration = process.env.RUN_INTEGRATION === "1";
 const testFn = runIntegration ? it : it.skip;
+const runHeadless = process.env.CI === "true";
 
 const appPath = path.resolve(process.cwd(), "index.html");
 
@@ -30,7 +31,7 @@ describe("visa wizard integration", () => {
     let browser;
     try {
       browser = await chromium.launch({
-        headless: false,
+        headless: runHeadless,
         maximize: true,
         args: process.platform === "linux"
           ? ["--no-sandbox", "--no-zygote", "--disable-dev-shm-usage"]

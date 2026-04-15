@@ -8,6 +8,8 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-latest
+    env:
+      CI: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,5 +22,5 @@ jobs:
         run: npm run build
       - name: Unit tests
         run: npm run test
-      - name: Integration smoke test
-        run: RUN_INTEGRATION=1 npx vitest run tests/integration.test.ts
+      - name: Integration tests
+        run: RUN_INTEGRATION=1 npm run test -- tests/integration.test.ts tests/locator-finder.integration.test.ts tests/ui-app.integration.test.ts tests/visa-wizard.integration.test.ts

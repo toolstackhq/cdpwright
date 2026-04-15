@@ -29,3 +29,13 @@ Factory helpers:
 - `page.getByText(text, options?)`
 
 Locators are resolved fresh on each call, so they pick up DOM changes and shadow DOM contents.
+Reads and actions auto-wait for the target to appear first, which means locator calls stay stable across small DOM updates. Missing elements count as hidden in assertions.
+
+```ts
+const save = page.getByRole("button", { name: "Save" });
+await save.click(); // waits for presence + actionability
+
+const message = page.getByText("Saved");
+await page.expect(message).toBeVisible();
+await page.expect(page.getByText("Loading...")).toBeHidden();
+```

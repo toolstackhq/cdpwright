@@ -612,7 +612,7 @@ export class Frame {
   async isVisibleLocator(query: LocatorQuery) {
     return this.evalOnLocator<boolean | null>(query, false, `
       if (!el) {
-        return null;
+        return false;
       }
       const rect = el.getBoundingClientRect();
       const style = window.getComputedStyle(el);
@@ -621,6 +621,7 @@ export class Frame {
   }
 
   async isEnabledLocator(query: LocatorQuery) {
+    await this.waitForLocatorPresence(query, this.defaultTimeout, `isEnabled ${this.locatorDescription(query)}`);
     return this.evalOnLocator<boolean | null>(query, false, `
       if (!el) {
         return null;
@@ -632,6 +633,7 @@ export class Frame {
   }
 
   async isCheckedLocator(query: LocatorQuery) {
+    await this.waitForLocatorPresence(query, this.defaultTimeout, `isChecked ${this.locatorDescription(query)}`);
     return this.evalOnLocator<boolean | null>(query, false, `
       if (!el) {
         return null;
@@ -651,6 +653,7 @@ export class Frame {
   }
 
   async textLocator(query: LocatorQuery) {
+    await this.waitForLocatorPresence(query, this.defaultTimeout, `text ${this.locatorDescription(query)}`);
     return this.evalOnLocator<string | null>(query, false, `
       if (!el) {
         return null;
@@ -666,6 +669,7 @@ export class Frame {
   }
 
   async valueLocator(query: LocatorQuery) {
+    await this.waitForLocatorPresence(query, this.defaultTimeout, `value ${this.locatorDescription(query)}`);
     return this.evalOnLocator<string | null>(query, false, `
       if (!el) {
         return null;
@@ -678,6 +682,7 @@ export class Frame {
   }
 
   async attributeLocator(query: LocatorQuery, name: string) {
+    await this.waitForLocatorPresence(query, this.defaultTimeout, `attribute ${this.locatorDescription(query)}`);
     return this.evalOnLocator<string | null>(query, false, `
       if (!el || !(el instanceof Element)) {
         return null;
@@ -687,6 +692,7 @@ export class Frame {
   }
 
   async classesLocator(query: LocatorQuery) {
+    await this.waitForLocatorPresence(query, this.defaultTimeout, `classes ${this.locatorDescription(query)}`);
     return this.evalOnLocator<string[] | null>(query, false, `
       if (!el) {
         return null;
@@ -699,6 +705,7 @@ export class Frame {
   }
 
   async cssLocator(query: LocatorQuery, property: string) {
+    await this.waitForLocatorPresence(query, this.defaultTimeout, `css ${this.locatorDescription(query)}`);
     return this.evalOnLocator<string | null>(query, false, `
       if (!el) {
         return null;
@@ -709,6 +716,7 @@ export class Frame {
   }
 
   async hasFocusLocator(query: LocatorQuery) {
+    await this.waitForLocatorPresence(query, this.defaultTimeout, `hasFocus ${this.locatorDescription(query)}`);
     return this.evalOnLocator<boolean | null>(query, false, `
       if (!el) {
         return null;
@@ -718,6 +726,7 @@ export class Frame {
   }
 
   async isInViewportLocator(query: LocatorQuery, fully = false) {
+    await this.waitForLocatorPresence(query, this.defaultTimeout, `isInViewport ${this.locatorDescription(query)}`);
     return this.evalOnLocator<boolean | null>(query, false, `
       if (!el) {
         return null;
@@ -733,6 +742,7 @@ export class Frame {
   }
 
   async isEditableLocator(query: LocatorQuery) {
+    await this.waitForLocatorPresence(query, this.defaultTimeout, `isEditable ${this.locatorDescription(query)}`);
     return this.evalOnLocator<boolean | null>(query, false, `
       if (!el) {
         return null;
@@ -751,6 +761,7 @@ export class Frame {
   }
 
   async text(selector: string, options: FrameSelectorOptions = {}) {
+    await this.waitForSelectorPresence(selector, options, false, `text ${selector}`);
     return this.evalOnSelector<string | null>(selector, options, false, `
       if (!el) {
         return null;
@@ -769,6 +780,7 @@ export class Frame {
   }
 
   async selectOption(selector: string, value: string) {
+    await this.waitForSelectorPresence(selector, {}, false, `selectOption ${selector}`);
     await this.evaluate(
       (sel, val) => {
         const el = document.querySelector(sel);
@@ -784,6 +796,7 @@ export class Frame {
   }
 
   async setFileInput(selector: string, name: string, contents: string, options: { mimeType?: string } = {}) {
+    await this.waitForSelectorPresence(selector, {}, false, `setFileInput ${selector}`);
     await this.evaluate(
       (sel, fileName, text, mime) => {
         const input = document.querySelector(sel);
@@ -804,6 +817,7 @@ export class Frame {
   }
 
   async attribute(selector: string, name: string, options: FrameSelectorOptions = {}) {
+    await this.waitForSelectorPresence(selector, options, false, `attribute ${selector}`);
     return this.evalOnSelector<string | null>(selector, options, false, `
       if (!el || !(el instanceof Element)) {
         return null;
@@ -813,6 +827,7 @@ export class Frame {
   }
 
   async value(selector: string, options: FrameSelectorOptions = {}) {
+    await this.waitForSelectorPresence(selector, options, false, `value ${selector}`);
     return this.evalOnSelector<string | null>(selector, options, false, `
       if (!el) {
         return null;
@@ -834,6 +849,7 @@ export class Frame {
   }
 
   async isEnabled(selector: string, options: FrameSelectorOptions = {}) {
+    await this.waitForSelectorPresence(selector, options, false, `isEnabled ${selector}`);
     return this.evalOnSelector<boolean | null>(selector, options, false, `
       if (!el) {
         return null;
@@ -845,6 +861,7 @@ export class Frame {
   }
 
   async isChecked(selector: string, options: FrameSelectorOptions = {}) {
+    await this.waitForSelectorPresence(selector, options, false, `isChecked ${selector}`);
     return this.evalOnSelector<boolean | null>(selector, options, false, `
       if (!el) {
         return null;
@@ -892,6 +909,7 @@ export class Frame {
   }
 
   async classes(selector: string, options: FrameSelectorOptions = {}) {
+    await this.waitForSelectorPresence(selector, options, false, `classes ${selector}`);
     return this.evalOnSelector<string[] | null>(selector, options, false, `
       if (!el) {
         return null;
@@ -904,6 +922,7 @@ export class Frame {
   }
 
   async css(selector: string, property: string, options: FrameSelectorOptions = {}) {
+    await this.waitForSelectorPresence(selector, options, false, `css ${selector}`);
     return this.evalOnSelector<string | null>(selector, options, false, `
       if (!el) {
         return null;
@@ -914,6 +933,7 @@ export class Frame {
   }
 
   async hasFocus(selector: string, options: FrameSelectorOptions = {}) {
+    await this.waitForSelectorPresence(selector, options, false, `hasFocus ${selector}`);
     return this.evalOnSelector<boolean | null>(selector, options, false, `
       if (!el) {
         return null;
@@ -923,6 +943,7 @@ export class Frame {
   }
 
   async isInViewport(selector: string, options: FrameSelectorOptions = {}, fully = false) {
+    await this.waitForSelectorPresence(selector, options, false, `isInViewport ${selector}`);
     return this.evalOnSelector<boolean | null>(selector, options, false, `
       if (!el) {
         return null;
@@ -938,6 +959,7 @@ export class Frame {
   }
 
   async isEditable(selector: string, options: FrameSelectorOptions = {}) {
+    await this.waitForSelectorPresence(selector, options, false, `isEditable ${selector}`);
     return this.evalOnSelector<boolean | null>(selector, options, false, `
       if (!el) {
         return null;
@@ -1437,6 +1459,27 @@ export class Frame {
     }
     const result = await this.session.send<{ result: { value?: T } }>("Runtime.evaluate", params);
     return result.result.value as T;
+  }
+
+  private async waitForSelectorPresence(selector: string, options: FrameSelectorOptions, forceXPath: boolean, description: string) {
+    const timeoutMs = options.timeoutMs ?? this.defaultTimeout;
+    await waitFor(async () => {
+      const handle = await this.querySelectorInternal(selector, options, forceXPath);
+      if (!handle) {
+        return null;
+      }
+      await this.releaseObject(handle.objectId);
+      return handle;
+    }, { timeoutMs, description });
+  }
+
+  private async waitForLocatorPresence(query: LocatorQuery, timeoutMs: number, description: string) {
+    await waitFor(async () => {
+      const present = await this.evalOnLocator<boolean | null>(query, false, `
+        return Boolean(el);
+      `);
+      return present ? true : null;
+    }, { timeoutMs, description });
   }
 }
 

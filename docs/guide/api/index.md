@@ -9,3 +9,4 @@ API docs are split by surface. Use the sidebar or search to jump to:
 - [Assertions](./assertions.md): `expect(page).element(...)` and `expect(locator)` matchers.
 
 Selector routing: CSS is assumed unless the selector starts with `/`, `./`, `.//`, `..`, or `(` followed by `/` or `.`, which is treated as XPath. Shadow DOM uses CSS with `>>>`.
+Most actions and assertions auto-wait for elements to appear or become actionable. Hidden assertions treat missing elements as hidden.

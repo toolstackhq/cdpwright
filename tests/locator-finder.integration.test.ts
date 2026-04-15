@@ -5,6 +5,7 @@ import { chromium } from "../src/index.js";
 
 const runIntegration = process.env.RUN_INTEGRATION === "1";
 const testFn = runIntegration ? it : it.skip;
+const runHeadless = process.env.CI === "true";
 
 const appPath = path.resolve(process.cwd(), "index.html");
 
@@ -18,7 +19,7 @@ describe("locator finder", () => {
     let browser;
     try {
       browser = await chromium.launch({
-        headless: false,
+        headless: runHeadless,
         args: process.platform === "linux" ? ["--no-sandbox", "--no-zygote", "--disable-dev-shm-usage"] : []
       });
       const page = await browser.newPage();

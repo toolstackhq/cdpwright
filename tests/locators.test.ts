@@ -31,6 +31,28 @@ function createPageSession() {
   return { session, calls };
 }
 
+function createMissingTextSession() {
+  const session = {
+    send: vi.fn(async (method: string, params?: Record<string, unknown>) => {
+      if (method === "Page.getFrameTree") {
+        return { frameTree: { frame: { id: "main", url: "https://example.com" } } };
+      }
+      if (method === "Runtime.evaluate") {
+        const expression = String(params?.expression ?? "");
+        if (expression === "document.readyState") {
+          return { result: { value: "complete" } };
+        }
+        if (expression.includes('"kind":"text"')) {
+          return { result: { value: false } };
+        }
+      }
+      return {};
+    }),
+    on: vi.fn()
+  };
+  return { session };
+}
+
 describe("role and text locators", () => {
   it("clicks by role and asserts visibility by text", async () => {
     const { session, calls } = createPageSession();
@@ -43,5 +65,13 @@ describe("role and text locators", () => {
     vitestExpect(calls.some((call) => call.method === "Runtime.evaluate" && String(call.params?.expression).includes('"kind":"role"'))).toBe(true);
     vitestExpect(calls.some((call) => call.method === "Runtime.evaluate" && String(call.params?.expression).includes('"kind":"text"'))).toBe(true);
     vitestExpect(calls.filter((call) => call.method === "Input.dispatchMouseEvent").length).toBeGreaterThan(0);
+  });
+
+  it("treats a missing locator as hidden", async () => {
+    const { session } = createMissingTextSession();
+    const page = new Page(session as never, new Logger("error"), new AutomationEvents());
+    await page.initialize();
+
+    await automatonExpect(page.getByText("Missing")).toBeHidden();
   });
 });

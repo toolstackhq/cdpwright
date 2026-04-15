@@ -10,6 +10,36 @@ await page.goto("https://example.com", { waitUntil: "load" });
 
 Supports `waitUntil: "load" | "domcontentloaded"` (throws if invalid), `timeoutMs`, and `allowFileUrl`.
 
+## Auto-wait
+
+Most element-facing page APIs wait for the target to exist before reading state or interacting with it. This includes:
+
+- `click` / `dblclick`
+- `type` / `typeSecure`
+- `fillInput`
+- `selectOption`
+- `setFileInput`
+- text/value/attribute/class/css/focus/viewport/editable helpers
+
+Assertions build on the same behavior, so `page.expect("#selector").toBeVisible()` and `page.expect(page.getByText(...)).toBeHidden()` keep polling until the state is stable. A missing element counts as hidden.
+
+```ts
+// Waits for the button to exist and become clickable.
+await page.click("#continue");
+
+// Waits for the select to exist before assigning the option.
+await page.selectOption("#country", "AU");
+
+// Waits for text to appear before reading it.
+const status = await page.text("#status");
+```
+
+```ts
+// Hidden assertions treat missing elements as hidden.
+await page.expect("#loading").toBeHidden();
+await page.expect(page.getByText("Saved")).toBeVisible();
+```
+
 ## Queries
 
 ```ts
@@ -92,6 +122,7 @@ await page.expect(page.getByText("Welcome, Casey!")).toBeVisible();
 ```
 
 `getByRole()` matches by ARIA role and accessible name. `getByText()` normalizes whitespace and supports exact or regex matches.
+Locators are resolved fresh on each call and auto-wait for presence before reads and actions, which makes them resilient to DOM updates and shadow DOM changes.
 
 ## Locator discovery
 

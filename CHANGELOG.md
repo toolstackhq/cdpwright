@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1
+- Added auto-waiting for element reads and interactions, including locator reads and hidden assertions.
+- Documented the auto-wait API surface across Page, Frame, Locator, and Assertions.
+- CI now runs the full integration suite headless; headed tests stay headed locally.
+
 ## 1.0.0 (cdpwright)
 - Renamed to **cdpwright**, published under `@toolstackhq/cdpwright`.
 - CLI binaries: `cdpwright` (canonical) and `cpw` (short alias); the previous `ca` / `chromium-automaton` bins have been removed.

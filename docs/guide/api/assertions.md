@@ -24,4 +24,13 @@ Common matchers:
 - `toHaveCss(property, valueOrRegex)`
 - `toHaveFocus()` / `toBeInViewport({ fully?: boolean })`
 
+Assertions poll until the requested state is true or the timeout expires. `toBeHidden()` treats a missing element as hidden, which matches the auto-wait behavior used throughout the element APIs.
+
+```ts
+await page.expect("#submit").toBeVisible();
+await page.expect("#loading").toBeHidden();
+await page.expect(page.getByText("Saved")).toBeVisible();
+await page.expect(page.getByText("Missing toast")).toBeHidden();
+```
+
 See the dedicated [Assertions guide](/guide/assertions) for the full matcher list and examples.

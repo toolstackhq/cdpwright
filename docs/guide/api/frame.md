@@ -13,6 +13,17 @@ await child.selectOption("#expiry-month", "01");
 
 Use CSS, XPath, or shadow selectors (`host >>> button`) the same way you do on `Page`.
 
+Frame APIs use the same auto-wait behavior as page APIs: element reads wait for presence first, actions wait for the target to become actionable, and hidden assertions treat missing elements as hidden.
+
+```ts
+const payment = page.frame({ name: "payment" });
+if (!payment) throw new Error("payment frame missing");
+
+await payment.click("#pay-now");
+await payment.expect("#receipt").toBeVisible();
+await payment.expect("#spinner").toBeHidden();
+```
+
 Frames also support:
 - `locator(selector)`
 - `getByRole(role, options?)`

@@ -10,7 +10,13 @@ describe("frame text selector handling", () => {
       send: async (method: string, params: Record<string, unknown>) => {
         if (method === "Runtime.evaluate") {
           expression = String(params.expression ?? "");
+          if (params.returnByValue === false) {
+            return { result: { objectId: "object-1" } };
+          }
           return { result: { value: "ok" } };
+        }
+        if (method === "Runtime.releaseObject") {
+          return {};
         }
         return {};
       }
@@ -28,7 +34,13 @@ describe("frame text selector handling", () => {
       send: async (method: string, params: Record<string, unknown>) => {
         if (method === "Runtime.evaluate") {
           expression = String(params.expression ?? "");
+          if (params.returnByValue === false) {
+            return { result: { objectId: "object-1" } };
+          }
           return { result: { value: "ok" } };
+        }
+        if (method === "Runtime.releaseObject") {
+          return {};
         }
         return {};
       }
@@ -46,7 +58,13 @@ describe("frame text selector handling", () => {
       send: async (method: string, params: Record<string, unknown>) => {
         if (method === "Runtime.evaluate") {
           expression = String(params.expression ?? "");
+          if (params.returnByValue === false) {
+            return { result: { objectId: "object-1" } };
+          }
           return { result: { value: "ok" } };
+        }
+        if (method === "Runtime.releaseObject") {
+          return {};
         }
         return {};
       }
