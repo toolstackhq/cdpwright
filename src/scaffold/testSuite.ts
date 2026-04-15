@@ -132,8 +132,8 @@ function buildRunnerPreset(runner: TestRunner): RunnerPreset {
 function vitestTemplate() {
   return `import path from "node:path";
 import { pathToFileURL } from "node:url";
-import { describe, expect, it } from "vitest";
-import { chromium } from "@toolstackhq/cdpwright";
+import { describe, it } from "vitest";
+import { chromium, expect as cdpExpect } from "@toolstackhq/cdpwright";
 
 const fixtureUrl = pathToFileURL(path.resolve("tests", "cpw.html")).toString();
 const launchOptions = {
@@ -146,7 +146,7 @@ describe("login flow", () => {
     await chromium.withBrowser(launchOptions, async (browser) => {
       const page = await browser.newPage();
       await page.goto(fixtureUrl, { allowFileUrl: true, waitUntil: "load" });
-      await expect(page).element("h1").toHaveText("Example Domain");
+      await cdpExpect(page).element("h1").toHaveText("Example Domain");
     });
   });
 });

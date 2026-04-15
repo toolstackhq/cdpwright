@@ -38,6 +38,7 @@ describe("test suite scaffold", () => {
     expect(pkg.scripts.test).toBe("npx vitest run");
     expect(pkg.scripts["test:watch"]).toBe("npx vitest");
     expect(pkg.devDependencies.vitest).toBe("^2.1.9");
+    expect(content).toContain('import { chromium, expect as cdpExpect } from "@toolstackhq/cdpwright";');
     expect(content).toContain('--no-sandbox", "--no-zygote", "--disable-dev-shm-usage');
   });
 
