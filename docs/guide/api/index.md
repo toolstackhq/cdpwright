@@ -19,6 +19,7 @@ await expect(page).element("h1").toHaveText(/Example Domain/);
 - [Frame](./frame.md): frame-scoped automation with the same auto-wait behavior
 - [Locator](./locator.md): reusable element handles that resolve fresh on each call
 - [Assertions](./assertions.md): `expect(page).element(...)` and `expect(locator)` matchers
+- [Under the Hood](./under-the-hood.md): sample CDP request sequences behind the common UI actions
 
 ## Core behavior
 

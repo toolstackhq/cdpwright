@@ -24,7 +24,8 @@ export default defineConfig({
             { text: "Page", link: "/guide/api/page" },
             { text: "Frame", link: "/guide/api/frame" },
             { text: "Locator", link: "/guide/api/locator" },
-            { text: "Assertions", link: "/guide/api/assertions" }
+            { text: "Assertions", link: "/guide/api/assertions" },
+            { text: "Under the Hood", link: "/guide/api/under-the-hood" }
           ]
         },
         { text: "Shadow DOM", link: "/guide/shadow-dom" },
