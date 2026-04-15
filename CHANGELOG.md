@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.3
+- Added `chromium.withBrowser()` for Playwright-style lifecycle-managed scripts.
+- Documented the helper in the README and getting-started guide.
+
 ## 1.3.2
 - Added a Playwright-style explicit Chromium install step and made CI run it before tests.
 - Promoted `cpw install` in the docs and CLI help as the primary browser cache command.
