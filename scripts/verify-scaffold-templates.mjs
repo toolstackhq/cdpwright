@@ -28,7 +28,14 @@ const presets = [
   }
 ];
 
-for (const preset of presets) {
+const requestedRunner = process.argv[2];
+const runners = requestedRunner ? presets.filter((preset) => preset.runner === requestedRunner) : presets;
+
+if (requestedRunner && runners.length === 0) {
+  throw new Error(`Unknown scaffold runner: ${requestedRunner}`);
+}
+
+for (const preset of runners) {
   const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), `cdpwright-${preset.runner}-`));
   fs.writeFileSync(
     path.join(projectDir, "package.json"),

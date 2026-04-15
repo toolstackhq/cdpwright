@@ -31,6 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI: true
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [vitest, mocha, node]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,5 +45,5 @@ jobs:
         run: npm install
       - name: Build
         run: npm run build
-      - name: Verify scaffold templates
-        run: node scripts/verify-scaffold-templates.mjs
+      - name: Verify scaffold templates (${{ matrix.runner }})
+        run: node scripts/verify-scaffold-templates.mjs ${{ matrix.runner }}
