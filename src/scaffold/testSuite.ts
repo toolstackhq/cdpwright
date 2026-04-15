@@ -136,10 +136,14 @@ import { describe, expect, it } from "vitest";
 import { chromium } from "@toolstackhq/cdpwright";
 
 const fixtureUrl = pathToFileURL(path.resolve("tests", "cpw.html")).toString();
+const launchOptions = {
+  headless: true,
+  args: process.platform === "linux" ? ["--no-sandbox", "--no-zygote", "--disable-dev-shm-usage"] : [],
+};
 
 describe("login flow", () => {
   it("opens the dashboard link", async () => {
-    await chromium.withBrowser({ headless: true }, async (browser) => {
+    await chromium.withBrowser(launchOptions, async (browser) => {
       const page = await browser.newPage();
       await page.goto(fixtureUrl, { allowFileUrl: true, waitUntil: "load" });
       await expect(page).element("h1").toHaveText("Example Domain");
@@ -156,10 +160,14 @@ import { pathToFileURL } from "node:url";
 import { chromium } from "@toolstackhq/cdpwright";
 
 const fixtureUrl = pathToFileURL(path.resolve("test", "cpw.html")).toString();
+const launchOptions = {
+  headless: true,
+  args: process.platform === "linux" ? ["--no-sandbox", "--no-zygote", "--disable-dev-shm-usage"] : [],
+};
 
 describe("login flow", () => {
   it("opens the dashboard link", async () => {
-    await chromium.withBrowser({ headless: true }, async (browser) => {
+    await chromium.withBrowser(launchOptions, async (browser) => {
       const page = await browser.newPage();
       await page.goto(fixtureUrl, { allowFileUrl: true, waitUntil: "load" });
       assert.equal(await page.evaluate(() => document.title), "cpw scaffold");
@@ -177,9 +185,13 @@ import { pathToFileURL } from "node:url";
 import { chromium } from "@toolstackhq/cdpwright";
 
 const fixtureUrl = pathToFileURL(path.resolve("test", "cpw.html")).toString();
+const launchOptions = {
+  headless: true,
+  args: process.platform === "linux" ? ["--no-sandbox", "--no-zygote", "--disable-dev-shm-usage"] : [],
+};
 
 test("login flow", async () => {
-  await chromium.withBrowser({ headless: true }, async (browser) => {
+  await chromium.withBrowser(launchOptions, async (browser) => {
     const page = await browser.newPage();
     await page.goto(fixtureUrl, { allowFileUrl: true, waitUntil: "load" });
     const title = await page.evaluate(() => document.title);
