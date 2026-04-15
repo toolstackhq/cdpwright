@@ -53,6 +53,17 @@ Save the page's current HTML source to disk.
 npx cpw html https://example.com -o page.html
 ```
 
+### `cpw markdown <url> -o <file>`
+
+Convert the rendered page into Markdown using a lightweight DOM-aware serializer.
+
+```bash
+npx cpw markdown https://en.wikipedia.org/wiki/History_of_artificial_intelligence -o wiki.md
+npx cpw markdown https://example.com
+```
+
+The command focuses on useful content: headings, paragraphs, links, lists, quotes, tables, and code blocks. It is intentionally partial, which keeps it useful for AI ingestion without promising perfect round-tripping.
+
 ### `cpw eval <url> <script>`
 
 Run a JavaScript expression in the page and print the result as JSON.

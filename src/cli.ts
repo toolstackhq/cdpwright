@@ -6,6 +6,7 @@ import { ChromiumManager } from "./browser/ChromiumManager.js";
 import { automaton } from "./index.js";
 import { PINNED_REVISION, resolveRevision } from "./browser/Revision.js";
 import { normalizeTestRunner, scaffoldTestSuite } from "./scaffold/testSuite.js";
+import { serializeDocumentToMarkdown } from "./html/markdown.js";
 import {
   detectPlatform,
   defaultCacheRoot,
@@ -68,6 +69,7 @@ Commands:
   screenshot <url> -o f    Take a screenshot (PNG/JPEG)
   pdf <url> -o file.pdf    Generate visual PDF of page
   html <url> -o file.html  Save the page HTML source
+  markdown <url> -o f.md    Convert page content to Markdown
   eval <url> <script>      Run JS in page, print result as JSON
   init test <runner>       Scaffold a test suite (vitest, mocha, node)
   install [options]        Download pinned Chromium snapshot
@@ -348,6 +350,42 @@ async function cmdHtml(rest: string[]) {
   console.log(`HTML saved to ${output}`);
 }
 
+async function cmdMarkdown(rest: string[]) {
+  const pos = positionalArgs(rest);
+  const url = pos[0];
+  const output = flagValue(rest, "-o") || flagValue(rest, "--output");
+
+  const writeMarkdown = async (page: Page) => {
+    const markdown = await page.evaluate<string>(serializeDocumentToMarkdown);
+    if (output) {
+      fs.writeFileSync(path.resolve(output), markdown, "utf-8");
+    } else {
+      process.stdout.write(markdown);
+      if (!markdown.endsWith("\n")) {
+        process.stdout.write("\n");
+      }
+    }
+  };
+
+  if (url) {
+    const headless = resolveHeadless(rest, true);
+    await withPage(url, { headless }, async (page) => {
+      await writeMarkdown(page);
+    });
+  } else {
+    const { browser, page } = await connectToSession();
+    try {
+      await writeMarkdown(page);
+    } finally {
+      await browser.disconnect();
+    }
+  }
+
+  if (output) {
+    console.log(`Markdown saved to ${output}`);
+  }
+}
+
 async function cmdPdf(rest: string[]) {
   const pos = positionalArgs(rest);
   const url = pos[0];
@@ -538,6 +576,8 @@ async function main() {
       return cmdScreenshot(rest);
     case "html":
       return cmdHtml(rest);
+    case "markdown":
+      return cmdMarkdown(rest);
     case "pdf":
       return cmdPdf(rest);
     case "eval":

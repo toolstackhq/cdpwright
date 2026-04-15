@@ -23,6 +23,8 @@ features:
     details: "cpw init test vitest|mocha|node creates a runnable starter suite, local fixture, and npm test script in your project."
   - title: Install once, run many
     details: "cpw install prewarms Chromium into a local cache, which keeps scripts and CI runs simple and predictable."
+  - title: Markdown export
+    details: "cpw markdown turns rendered pages into lightweight Markdown for notes, AI pipelines, and content extraction."
   - title: Shadow DOM and frames
     details: "Selectors, frames, and locators all work together, including shadow-piercing selectors and reusable locator handles."
   - title: Lightweight package

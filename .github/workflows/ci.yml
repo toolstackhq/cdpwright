@@ -25,7 +25,7 @@ jobs:
       - name: Unit tests
         run: npm run test
       - name: Integration tests
-        run: RUN_INTEGRATION=1 npm run test -- tests/integration.test.ts tests/locator-finder.integration.test.ts tests/ui-app.integration.test.ts tests/visa-wizard.integration.test.ts
+        run: RUN_INTEGRATION=1 npm run test -- tests/integration.test.ts tests/locator-finder.integration.test.ts tests/markdown.integration.test.ts tests/ui-app.integration.test.ts tests/visa-wizard.integration.test.ts
 
   scaffold-test:
     runs-on: ubuntu-latest
