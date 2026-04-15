@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0
+- Added `cpw init test <runner>` scaffolding for Vitest, Mocha, and Node's built-in test runner.
+- Added `chromium.withBrowser()` for Playwright-style lifecycle-managed scripts.
+- Documented the helper and scaffold flow in the README and getting-started guide.
+
 ## 1.3.3
 - Added `chromium.withBrowser()` for Playwright-style lifecycle-managed scripts.
 - Documented the helper in the README and getting-started guide.

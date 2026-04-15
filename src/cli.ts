@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { ChromiumManager } from "./browser/ChromiumManager.js";
 import { automaton } from "./index.js";
 import { PINNED_REVISION, resolveRevision } from "./browser/Revision.js";
+import { normalizeTestRunner, scaffoldTestSuite } from "./scaffold/testSuite.js";
 import {
   detectPlatform,
   defaultCacheRoot,
@@ -68,6 +69,7 @@ Commands:
   pdf <url> -o file.pdf    Generate visual PDF of page
   html <url> -o file.html  Save the page HTML source
   eval <url> <script>      Run JS in page, print result as JSON
+  init test <runner>       Scaffold a test suite (vitest, mocha, node)
   install [options]        Download pinned Chromium snapshot
   download                 Alias for install
   version                  Print cdpwright and Chromium versions
@@ -188,6 +190,33 @@ async function cmdDownload(rest: string[]) {
   if (urlFlag) process.env.CDPWRIGHT_DOWNLOAD_URL = urlFlag;
   const manager = new ChromiumManager();
   await manager.download({ latest });
+}
+
+async function cmdInit(rest: string[]) {
+  const subcommand = rest[0];
+  if (subcommand !== "test") {
+    console.error("Usage: cpw init test <runner>");
+    console.error("Supported runners: vitest, mocha, node");
+    process.exit(1);
+  }
+
+  const runner = normalizeTestRunner(rest[1]);
+  if (!runner) {
+    console.error("Usage: cpw init test <runner>");
+    console.error("Supported runners: vitest, mocha, node");
+    process.exit(1);
+  }
+
+  const result = scaffoldTestSuite({ runner });
+  const extraFileLines = result.extraFiles.map((file) => `- ${path.relative(process.cwd(), file)}`).join("\n");
+
+  console.log(`Scaffolded test suite for ${runner}`);
+  console.log(`- updated ${path.relative(process.cwd(), result.packageJsonPath)}`);
+  console.log(`- wrote ${path.relative(process.cwd(), result.testFilePath)}`);
+  if (result.extraFiles.length > 0) {
+    console.log(extraFileLines);
+  }
+  console.log(`Run: npm test`);
 }
 
 async function cmdOpen(rest: string[]) {
@@ -496,6 +525,8 @@ async function main() {
   }
 
   switch (command) {
+    case "init":
+      return cmdInit(rest);
     case "download":
     case "install":
       return cmdDownload(rest);

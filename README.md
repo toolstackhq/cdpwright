@@ -54,6 +54,16 @@ await chromium.withBrowser({ headless: false, logEvents: true }, async (browser)
 });
 ```
 
+If you want to scaffold a test suite after `npm init -y`, run:
+
+```bash
+npx cpw init test vitest
+npx cpw init test mocha
+npx cpw init test node
+```
+
+That writes a sample test file and updates `package.json` with an `npm test` script for the chosen runner.
+
 > **Tip:** If you prefer `.js` files, add `"type": "module"` to your `package.json`.
 > For TypeScript, just rename to `quick.ts` and run with `tsx quick.ts` or `npx ts-node --esm quick.ts`.
 
@@ -63,6 +73,7 @@ await chromium.withBrowser({ headless: false, logEvents: true }, async (browser)
 - Selector routing: CSS by default; XPath if the selector starts with `/`, `./`, `.//`, `..`, or `(/`. Shadow DOM via `>>>` (e.g., `host >>> button`).
 - Contexts: `browser.newContext()` gives incognito-style isolation without launching a new browser.
 - Helper: `chromium.withBrowser()` launches Chromium, runs your callback, and closes the browser automatically.
+- Scaffold: `cpw init test <runner>` writes a starter test file and `npm test` script for Vitest, Mocha, or Node's built-in runner.
 - Browser install: `npx cpw install` (or `--latest`) fetches Chromium into a local cache once, Playwright-style.
 
 ## Key APIs

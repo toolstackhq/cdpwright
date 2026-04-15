@@ -50,5 +50,15 @@ await chromium.withBrowser({ headless: true, logEvents: true }, async (browser) 
 });
 ```
 
+If you want a starter test suite after `npm init -y`, scaffold one with:
+
+```bash
+npx cpw init test vitest
+npx cpw init test mocha
+npx cpw init test node
+```
+
+Each preset writes a sample test file and adds an `npm test` script to `package.json`.
+
 > **Tip:** If you prefer `.js` files, add `"type": "module"` to your `package.json`.
 > For TypeScript, rename to `index.ts` and run with `tsx index.ts`.

@@ -75,6 +75,20 @@ npx cpw install --url <url>    # use an exact zip URL
 
 `download` is an alias for `install`.
 
+### `cpw init test <runner>`
+
+Scaffold a starter test suite and update `package.json` with an `npm test` script.
+
+Supported runners:
+
+```bash
+npx cpw init test vitest
+npx cpw init test mocha
+npx cpw init test node
+```
+
+The scaffold uses built-in `assert` for Mocha and Node's native runner, and `vitest`'s own `expect` for Vitest.
+
 ### `cpw version`
 
 Print cdpwright and Chromium versions.
