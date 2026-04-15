@@ -74,6 +74,7 @@ That writes a sample test file and updates `package.json` with an `npm test` scr
 - Contexts: `browser.newContext()` gives incognito-style isolation without launching a new browser.
 - Helper: `chromium.withBrowser()` launches Chromium, runs your callback, and closes the browser automatically.
 - Scaffold: `cpw init test <runner>` writes a starter test file and `npm test` script for Vitest, Mocha, or Node's built-in runner.
+- Scaffold templates are verified in CI for all supported runners.
 - Browser install: `npx cpw install` (or `--latest`) fetches Chromium into a local cache once, Playwright-style.
 
 ## Key APIs

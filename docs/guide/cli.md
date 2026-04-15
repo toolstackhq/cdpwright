@@ -89,6 +89,8 @@ npx cpw init test node
 
 The scaffold uses built-in `assert` for Mocha and Node's native runner, and `vitest`'s own `expect` for Vitest.
 
+The templates are also checked in CI for all supported runners, so the generated starter suite stays in sync with the CLI.
+
 ### `cpw version`
 
 Print cdpwright and Chromium versions.
