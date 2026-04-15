@@ -1,6 +1,14 @@
 # cdpwright
 
+[![CI](https://github.com/toolstackhq/cdpwright/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/toolstackhq/cdpwright/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/badge/tests-vitest%20%2B%20integration-4caf50)](https://github.com/toolstackhq/cdpwright/actions/workflows/ci.yml)
+[![Chromium version check](https://github.com/toolstackhq/cdpwright/actions/workflows/chromium-revision.yml/badge.svg?branch=main)](https://github.com/toolstackhq/cdpwright/actions/workflows/chromium-revision.yml)
+[![npm version](https://img.shields.io/npm/v/@toolstackhq/cdpwright)](https://www.npmjs.com/package/@toolstackhq/cdpwright)
+[![license](https://img.shields.io/npm/l/@toolstackhq/cdpwright)](https://github.com/toolstackhq/cdpwright/blob/main/LICENSE)
+
 Chromium-only automation built on the Chrome DevTools Protocol (CDP). A lightweight, Playwright-style API with `Browser`, `Context`, `Page`, `Frame`, and `Locator` primitives—no test runner included.
+
+Published package size: about 708 KB unpacked on npm, so the library footprint stays small even though Chromium itself is installed separately.
 
 ## Quick start
 
@@ -31,6 +39,21 @@ Run it:
 node quick.mjs
 ```
 
+If you want Playwright-style lifecycle management outside a test runner, use `chromium.withBrowser()` and skip the manual close:
+
+```js
+import { chromium } from "@toolstackhq/cdpwright";
+
+await chromium.withBrowser({ headless: false, logEvents: true }, async (browser) => {
+  const page = await browser.newPage();
+  await page.goto("https://toolstackhq.github.io/bluledger/login", { waitUntil: "load" });
+  await page.type("#customerId", "92718463");
+  await page.typeSecure("#password", "Harbour!92");
+  await page.click("#login-submit-button");
+  await page.expect("#dashboard-transfer-money-link").toBeVisible();
+});
+```
+
 > **Tip:** If you prefer `.js` files, add `"type": "module"` to your `package.json`.
 > For TypeScript, just rename to `quick.ts` and run with `tsx quick.ts` or `npx ts-node --esm quick.ts`.
 
@@ -39,6 +62,7 @@ node quick.mjs
 - Small surface: pages/frames/locators, plus built-in expect matchers.
 - Selector routing: CSS by default; XPath if the selector starts with `/`, `./`, `.//`, `..`, or `(/`. Shadow DOM via `>>>` (e.g., `host >>> button`).
 - Contexts: `browser.newContext()` gives incognito-style isolation without launching a new browser.
+- Helper: `chromium.withBrowser()` launches Chromium, runs your callback, and closes the browser automatically.
 - Browser install: `npx cpw install` (or `--latest`) fetches Chromium into a local cache once, Playwright-style.
 
 ## Key APIs

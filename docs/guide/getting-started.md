@@ -36,5 +36,19 @@ await browser.close();
 node index.mjs
 ```
 
+If you want the browser to close automatically when the callback finishes, use `chromium.withBrowser()`:
+
+```js
+// index.mjs
+import { chromium } from "@toolstackhq/cdpwright";
+
+await chromium.withBrowser({ headless: true, logEvents: true }, async (browser) => {
+  const page = await browser.newPage();
+
+  await page.goto("https://example.com", { waitUntil: "load" });
+  await page.expect("h1").toHaveText(/Example Domain/);
+});
+```
+
 > **Tip:** If you prefer `.js` files, add `"type": "module"` to your `package.json`.
 > For TypeScript, rename to `index.ts` and run with `tsx index.ts`.

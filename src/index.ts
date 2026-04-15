@@ -13,6 +13,8 @@ export type AutomatonLaunchOptions = LaunchOptions & {
   logger?: Logger;
 };
 
+export type WithBrowserCallback<T> = (browser: Browser) => Promise<T> | T;
+
 export type ConnectOptions = {
   logLevel?: LogLevel;
   logger?: Logger;
@@ -21,11 +23,43 @@ export type ConnectOptions = {
   logAssertions?: boolean;
 };
 
+export async function withBrowser<T>(options: AutomatonLaunchOptions, callback: WithBrowserCallback<T>): Promise<T>;
+export async function withBrowser<T>(callback: WithBrowserCallback<T>): Promise<T>;
+export async function withBrowser<T>(
+  optionsOrCallback: AutomatonLaunchOptions | WithBrowserCallback<T>,
+  maybeCallback?: WithBrowserCallback<T>
+): Promise<T> {
+  const options = typeof optionsOrCallback === "function" ? {} : optionsOrCallback;
+  const callback = typeof optionsOrCallback === "function" ? optionsOrCallback : maybeCallback;
+  if (!callback) {
+    throw new Error("withBrowser requires a callback");
+  }
+
+  const browser = await automaton.launch(options);
+  let callbackError: unknown;
+  try {
+    return await callback(browser);
+  } catch (err) {
+    callbackError = err;
+    throw err;
+  } finally {
+    try {
+      await browser.close();
+    } catch (closeError) {
+      if (!callbackError) {
+        throw closeError;
+      }
+    }
+  }
+}
+
 export const automaton = {
   async launch(options: AutomatonLaunchOptions = {}): Promise<Browser> {
     const manager = new ChromiumManager(options.logger);
     return manager.launch(options);
   },
+
+  withBrowser,
 
   async connect(wsEndpoint: string, options: ConnectOptions = {}): Promise<Browser> {
     const logger = options.logger ?? new Logger(options.logLevel ?? "warn");
