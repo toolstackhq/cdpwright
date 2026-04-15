@@ -1,76 +1,126 @@
-name: Chromium Revision Bump
+name: Chromium Revision Watch
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: "0 23 * * *"
-  workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+  issues: write
+
+concurrency:
+  group: chromium-revision-watch
+  cancel-in-progress: false
 
 jobs:
-  bump-revision:
+  watch:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies
+      - name: Install workspace dependencies
         run: npm ci
 
-      - name: Update pinned Chromium revision
-        run: npm run update:chromium-revision
+      - name: Check Chromium revision
+        id: watch
+        run: npm run check:chromium-revision
 
-      - name: Check for changes
-        id: diff
+      - name: Write workflow summary
         run: |
-          if git diff --quiet -- src/browser/Revision.ts; then
-            echo "updated=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "updated=true" >> "$GITHUB_OUTPUT"
-          fi
+          {
+            echo "## Chromium Revision Watch"
+            echo
+            echo "- Pinned revision: ${{ steps.watch.outputs.pinned_revision }}"
+            echo "- Linux latest: ${{ steps.watch.outputs.latest_linux_revision }}"
+            echo "- macOS latest: ${{ steps.watch.outputs.latest_mac_revision }}"
+            echo "- Windows latest: ${{ steps.watch.outputs.latest_win_revision }}"
+            echo "- Highest observed revision: ${{ steps.watch.outputs.highest_observed_revision }}"
+            echo "- Shared search ceiling: ${{ steps.watch.outputs.shared_search_ceiling }}"
+            echo "- Shared revision available: ${{ steps.watch.outputs.should_notify }}"
+            if [ "${{ steps.watch.outputs.candidate_revision }}" != "" ]; then
+              echo "- Candidate revision: ${{ steps.watch.outputs.candidate_revision }}"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Build
-        if: steps.diff.outputs.updated == 'true'
-        run: npm run build
-
-      - name: Test
-        if: steps.diff.outputs.updated == 'true'
-        run: npm run test
-
-      - name: Typecheck
-        if: steps.diff.outputs.updated == 'true'
-        run: npm run typecheck
-
-      - name: Validate PR token
-        if: steps.diff.outputs.updated == 'true'
-        env:
-          CDPWRIGHT_PR_TOKEN: ${{ secrets.CDPWRIGHT_PR_TOKEN }}
-        run: |
-          if [ -z "${CDPWRIGHT_PR_TOKEN}" ]; then
-            echo "CDPWRIGHT_PR_TOKEN is not set. Add a repo secret with a PAT or bot token that can create pull requests."
-            exit 1
-          fi
-
-      - name: Create pull request
-        if: steps.diff.outputs.updated == 'true'
-        uses: peter-evans/create-pull-request@v6
+      - name: Create or update chromium revision issue
+        if: steps.watch.outputs.should_notify == 'true'
+        uses: actions/github-script@v7
         with:
-          token: ${{ secrets.CDPWRIGHT_PR_TOKEN }}
-          branch: chore/bump-chromium-revision
-          title: "chore: bump Chromium revision"
-          commit-message: "chore: bump Chromium revision"
-          body: |
-            Automated Chromium revision bump based on the latest snapshot LAST_CHANGE values.
-          delete-branch: true
-          add-paths: |
-            src/browser/Revision.ts
+          script: |
+            const title = "Chromium revision bump alert";
+            const body = [
+              "## Chromium revision bump alert",
+              "",
+              `- Pinned revision: ${{ steps.watch.outputs.pinned_revision }}`,
+              `- Linux latest: ${{ steps.watch.outputs.latest_linux_revision }}`,
+              `- macOS latest: ${{ steps.watch.outputs.latest_mac_revision }}`,
+              `- Windows latest: ${{ steps.watch.outputs.latest_win_revision }}`,
+              `- Highest observed revision: ${{ steps.watch.outputs.highest_observed_revision }}`,
+              `- Shared search ceiling: ${{ steps.watch.outputs.shared_search_ceiling }}`,
+              `- Candidate revision: ${{ steps.watch.outputs.candidate_revision }}`,
+              "",
+              "## Next steps",
+              "",
+              "1. Update `src/browser/Revision.ts` with the candidate revision.",
+              "2. Run the build and test suite.",
+              "3. Open a pull request with the revision bump.",
+              "",
+              "This issue is maintained by `.github/workflows/chromium-revision.yml`."
+            ].join("\n");
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              per_page: 100
+            });
+
+            const existing = issues.find((issue) => issue.title === title);
+
+            if (existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body
+              });
+            }
+
+      - name: Close chromium revision issue when clean
+        if: steps.watch.outputs.should_notify != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = "Chromium revision bump alert";
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: "open",
+              per_page: 100
+            });
+
+            const existing = issues.find((issue) => issue.title === title);
+
+            if (existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                state: "closed"
+              });
+            }

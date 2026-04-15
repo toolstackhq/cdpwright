@@ -36,6 +36,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
+    "check:chromium-revision": "node scripts/check-chromium-revision.mjs",
     "update:chromium-revision": "node scripts/update-chromium-revision.mjs",
     "docs:dev": "vitepress dev docs",
     "docs:build": "vitepress build docs",
