@@ -1,42 +1,76 @@
 # Frame API
 
-Frames expose the same actions as `Page`, but scoped to a specific frame.
+Frames expose the same automation surface as `Page`, but scoped to a specific iframe or frame target.
+
+## When to use this
+
+- Your app embeds a checkout, auth, or widget frame
+- You need to interact with nested content from the main page
+- You want the same auto-waiting behavior without switching to raw CDP
+
+## Find the frame
 
 ```ts
-const child = page.frame({ name: "checkout" });
-if (!child) throw new Error("frame missing");
-
-await child.click("#pay-now");
-await child.type("#card", "4111111111111111");
-await child.selectOption("#expiry-month", "01");
+const checkout = page.frame({ name: "checkout" });
+if (!checkout) throw new Error("checkout frame missing");
 ```
 
-Use CSS, XPath, or shadow selectors (`host >>> button`) the same way you do on `Page`.
-
-Frame APIs use the same auto-wait behavior as page APIs: element reads wait for presence first, actions wait for the target to become actionable, and hidden assertions treat missing elements as hidden.
+You can also target frames by URL fragments:
 
 ```ts
-const payment = page.frame({ name: "payment" });
+const payment = page.frame({ urlIncludes: "payments" });
 if (!payment) throw new Error("payment frame missing");
-
-await payment.click("#pay-now");
-await payment.expect("#receipt").toBeVisible();
-await payment.expect("#spinner").toBeHidden();
 ```
 
-Frames also support:
+## Use it like a page
+
+```ts
+await checkout.click("#pay-now");
+await checkout.type("#card", "4111111111111111");
+await checkout.selectOption("#expiry-month", "01");
+await checkout.expect("#receipt").toBeVisible();
+```
+
+CSS, XPath, and shadow selectors work the same way they do on `Page`.
+
+## Auto-waiting still applies
+
+Frame reads wait for presence first, actions wait for actionability, and hidden assertions treat missing elements as hidden.
+
+```ts
+await payment.expect("#spinner").toBeHidden();
+await payment.expect("#receipt").toBeVisible();
+```
+
+## Locators and queries
+
+Frames support the same query and locator helpers as `Page`:
+
 - `locator(selector)`
 - `getByRole(role, options?)`
 - `getByText(text, options?)`
-- `evaluate(fn, ...args)`
 - `query / queryAll`
 - `queryXPath / queryAllXPath`
+- `findLocators`
+
+Example:
+
+```ts
+const pay = payment.getByRole("button", { name: "Pay now" });
+await pay.click();
+await payment.expect(pay).toBeEnabled();
+```
+
+## Other helpers
+
+Frame instances also support:
+
+- `evaluate(fn, ...args)`
 - `click` / `dblclick`
 - `type` / `typeSecure`
 - `fillInput`
 - `selectOption`
 - `setFileInput`
-- `findLocators`
 - `exists` / `isVisible`
 - `text` / `textSecure`
 - `attribute` / `value` / `valueSecure`
@@ -44,12 +78,4 @@ Frames also support:
 - `isEnabled` / `isChecked` / `isEditable`
 - `hasFocus` / `isInViewport`
 
-Screenshots are page-level APIs: use `page.screenshot()` or `page.screenshotBase64()`.
-
-Combine frames with `expect`:
-
-```ts
-const payment = page.frame({ urlIncludes: "payments" });
-await page.expect().frame({ urlIncludes: "payments" }).element("#pay").toBeEnabled();
-await payment.getByRole("button", { name: "Pay now" }).click();
-```
+Screenshots are page-level APIs, so use `page.screenshot()` or `page.screenshotBase64()`.

@@ -1,6 +1,15 @@
 # Locator API
 
-Locators wrap a selector so you can reuse it without repeating strings.
+Locators are the reusable handles in `cdpwright`. Use them when the same selector shows up more than once or when you want a handle that survives DOM updates.
+
+## Why locators feel stable
+
+- They are resolved fresh on every call
+- They auto-wait for presence before reads and actions
+- They work across shadow DOM boundaries
+- They fit nicely with `page.expect(...)`
+
+## Basic usage
 
 ```ts
 const header = page.locator("header >>> button.menu");
@@ -8,13 +17,12 @@ const signIn = page.getByRole("button", { name: "Sign in" });
 const welcome = page.getByText("Welcome, John!");
 
 await header.click();
-await header.exists(); // boolean
-const text = await header.text();
 await signIn.click();
 await page.expect(welcome).toBeVisible();
 ```
 
-Methods:
+## Common locator methods
+
 - `click()` / `dblclick()`
 - `type(text)`
 - `exists()` returns `boolean`
@@ -24,12 +32,14 @@ Methods:
 - `hasFocus()` / `isInViewport()` / `isEditable()`
 - `count()` returns the number of matching elements
 
-Factory helpers:
+## Factory helpers
+
 - `page.getByRole(role, options?)`
 - `page.getByText(text, options?)`
 
-Locators are resolved fresh on each call, so they pick up DOM changes and shadow DOM contents.
-Reads and actions auto-wait for the target to appear first, which means locator calls stay stable across small DOM updates. Missing elements count as hidden in assertions.
+These are the best choices when you want semantic locators instead of selector strings.
+
+## Auto-waiting behavior
 
 ```ts
 const save = page.getByRole("button", { name: "Save" });
@@ -39,3 +49,5 @@ const message = page.getByText("Saved");
 await page.expect(message).toBeVisible();
 await page.expect(page.getByText("Loading...")).toBeHidden();
 ```
+
+Missing elements count as hidden in assertions, which keeps locator assertions readable on pages that mount and unmount content.
