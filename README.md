@@ -64,6 +64,14 @@ npx cpw init test node
 
 That writes a sample test file and updates `package.json` with an `npm test` script for the chosen runner.
 
+Vitest templates import the package's own assertion helper, so generated tests can use `cdpExpect(page).element(...)`. Mocha and `node:test` templates use built-in `assert`.
+
+All scaffolded templates also include the Linux Chromium launch flags used by the repo's CI tests:
+
+```js
+args: process.platform === "linux" ? ["--no-sandbox", "--no-zygote", "--disable-dev-shm-usage"] : []
+```
+
 > **Tip:** If you prefer `.js` files, add `"type": "module"` to your `package.json`.
 > For TypeScript, just rename to `quick.ts` and run with `tsx quick.ts` or `npx ts-node --esm quick.ts`.
 

@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.1
+- Fixed the Vitest scaffold to use `cdpExpect(page).element(...)` from `@toolstackhq/cdpwright`.
+- Aligned all generated scaffold templates with the Linux Chromium launch flags used by CI.
+- Documented the scaffold assertions and launch options in the README and guides.
+
 ## 1.4.0
 - Added `cpw init test <runner>` scaffolding for Vitest, Mocha, and Node's built-in test runner.
 - Added `chromium.withBrowser()` for Playwright-style lifecycle-managed scripts.

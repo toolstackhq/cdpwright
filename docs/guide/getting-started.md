@@ -62,5 +62,17 @@ Each preset writes a sample test file, a local HTML fixture, and adds an `npm te
 
 Those starter templates are verified in CI for Vitest, Mocha, and Node's built-in runner.
 
+Vitest templates import the package's assertion helper as `cdpExpect`, so generated tests can write:
+
+```js
+await cdpExpect(page).element("h1").toHaveText("Example Domain");
+```
+
+All generated templates also include the Linux Chromium launch flags used by CI:
+
+```js
+args: process.platform === "linux" ? ["--no-sandbox", "--no-zygote", "--disable-dev-shm-usage"] : []
+```
+
 > **Tip:** If you prefer `.js` files, add `"type": "module"` to your `package.json`.
 > For TypeScript, rename to `index.ts` and run with `tsx index.ts`.

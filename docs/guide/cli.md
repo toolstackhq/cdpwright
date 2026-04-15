@@ -87,7 +87,13 @@ npx cpw init test mocha
 npx cpw init test node
 ```
 
-The scaffold uses built-in `assert` for Mocha and Node's native runner, and `vitest`'s own `expect` for Vitest. It also writes a tiny local HTML fixture so the generated test runs offline.
+The scaffold uses built-in `assert` for Mocha and Node's native runner, and imports `cdpExpect` from `@toolstackhq/cdpwright` for Vitest. It also writes a tiny local HTML fixture so the generated test runs offline.
+
+Every generated template includes the Linux Chromium launch flags used by CI:
+
+```js
+args: process.platform === "linux" ? ["--no-sandbox", "--no-zygote", "--disable-dev-shm-usage"] : []
+```
 
 The templates are also checked in CI for all supported runners, so the generated starter suite stays in sync with the CLI.
 
