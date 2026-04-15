@@ -58,8 +58,92 @@ export class Locator {
     return this.frame.dblclickLocator(this.query, { ...this.queryTimeoutOptions(), ...options });
   }
 
+  async fill(value: string, options: { timeoutMs?: number } = {}) {
+    if (this.query.kind === "selector") {
+      return this.frame.fill(this.query.selector, value, { ...this.queryTimeoutOptions(), ...options });
+    }
+    return this.frame.fillLocator(this.query, value, { ...this.queryTimeoutOptions(), ...options });
+  }
+
+  async clear(options: { timeoutMs?: number } = {}) {
+    if (this.query.kind === "selector") {
+      return this.frame.clear(this.query.selector, { ...this.queryTimeoutOptions(), ...options });
+    }
+    return this.frame.clearLocator(this.query, { ...this.queryTimeoutOptions(), ...options });
+  }
+
   async type(text: string, options: { timeoutMs?: number } = {}) {
     return this.frame.typeLocator(this.query, text, { ...this.queryTimeoutOptions(), ...options });
+  }
+
+  async focus(options: { timeoutMs?: number } = {}) {
+    if (this.query.kind === "selector") {
+      return this.frame.focus(this.query.selector, { ...this.queryTimeoutOptions(), ...options });
+    }
+    return this.frame.focusLocator(this.query, { ...this.queryTimeoutOptions(), ...options });
+  }
+
+  async blur(options: { timeoutMs?: number } = {}) {
+    if (this.query.kind === "selector") {
+      return this.frame.blur(this.query.selector, { ...this.queryTimeoutOptions(), ...options });
+    }
+    return this.frame.blurLocator(this.query, { ...this.queryTimeoutOptions(), ...options });
+  }
+
+  async hover(options: { timeoutMs?: number } = {}) {
+    if (this.query.kind === "selector") {
+      return this.frame.hover(this.query.selector, { ...this.queryTimeoutOptions(), ...options });
+    }
+    return this.frame.hoverLocator(this.query, { ...this.queryTimeoutOptions(), ...options });
+  }
+
+  async press(key: string, options: { timeoutMs?: number } = {}) {
+    if (this.query.kind === "selector") {
+      return this.frame.press(this.query.selector, key, { ...this.queryTimeoutOptions(), ...options });
+    }
+    return this.frame.pressLocator(this.query, key, { ...this.queryTimeoutOptions(), ...options });
+  }
+
+  async selectText(options: { timeoutMs?: number } = {}) {
+    if (this.query.kind === "selector") {
+      return this.frame.selectText(this.query.selector, { ...this.queryTimeoutOptions(), ...options });
+    }
+    return this.frame.selectTextLocator(this.query, { ...this.queryTimeoutOptions(), ...options });
+  }
+
+  async scrollIntoViewIfNeeded(options: { timeoutMs?: number } = {}) {
+    if (this.query.kind === "selector") {
+      return this.frame.scrollIntoViewIfNeeded(this.query.selector, { ...this.queryTimeoutOptions(), ...options });
+    }
+    return this.frame.scrollIntoViewIfNeededLocator(this.query, { ...this.queryTimeoutOptions(), ...options });
+  }
+
+  async check(options: { timeoutMs?: number } = {}) {
+    if (this.query.kind === "selector") {
+      return this.frame.check(this.query.selector, { ...this.queryTimeoutOptions(), ...options });
+    }
+    return this.frame.checkLocator(this.query, { ...this.queryTimeoutOptions(), ...options });
+  }
+
+  async uncheck(options: { timeoutMs?: number } = {}) {
+    if (this.query.kind === "selector") {
+      return this.frame.uncheck(this.query.selector, { ...this.queryTimeoutOptions(), ...options });
+    }
+    return this.frame.uncheckLocator(this.query, { ...this.queryTimeoutOptions(), ...options });
+  }
+
+  async setChecked(checked: boolean, options: { timeoutMs?: number } = {}) {
+    if (this.query.kind === "selector") {
+      return this.frame.setChecked(this.query.selector, checked, { ...this.queryTimeoutOptions(), ...options });
+    }
+    return this.frame.setCheckedLocator(this.query, checked, { ...this.queryTimeoutOptions(), ...options });
+  }
+
+  async setInputFiles(files: string | string[] | { name: string; contents: string | Buffer; mimeType?: string } | Array<{ name: string; contents: string | Buffer; mimeType?: string }>, options: { timeoutMs?: number; mimeType?: string } = {}) {
+    if (this.query.kind === "selector") {
+      return this.frame.setInputFiles(this.query.selector, files, { ...this.queryTimeoutOptions(), ...options });
+    }
+    return this.frame.setInputFilesLocator(this.query, files, { ...this.queryTimeoutOptions(), ...options });
   }
 
   async exists() {

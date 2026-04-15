@@ -9,6 +9,7 @@ const runIntegration = process.env.RUN_INTEGRATION === "1";
 const testFn = runIntegration ? it : it.skip;
 
 const fixturePath = path.resolve(process.cwd(), "fixtures", "ui-app.html");
+const artifactsDir = path.resolve(process.cwd(), "tests", "artifacts");
 
 describe("ui app integration", () => {
   testFn("validates core automation features", async () => {
@@ -22,24 +23,22 @@ describe("ui app integration", () => {
 
     await page.goto(pathToFileURL(fixturePath).toString(), { allowFileUrl: true, waitUntil: "load" });
 
-    await page.type("#customer-name", "Jane Buyer");
-    await page.type("#customer-email", "jane@example.com");
-    await page.type("#shipping-address", "12 Market Street");
-    await page.evaluate(() => {
-      const select = document.querySelector("#shipping-speed");
-      if (select) {
-        (select as HTMLSelectElement).value = "express";
-        select.dispatchEvent(new Event("change", { bubbles: true }));
-      }
-    });
+    const customerName = page.locator("#customer-name");
+    const customerEmail = page.locator("#customer-email");
+    const shippingAddress = page.locator("#shipping-address");
+    const quantity = page.locator("#product-qty");
+    const note = page.locator("#product-note");
+    const promoOptin = page.locator("#promo-optin");
+    const receiptFile = page.locator("#receipt-file");
 
-    await page.evaluate(() => {
-      const qty = document.querySelector("#product-qty");
-      if (qty instanceof HTMLInputElement) {
-        qty.value = "2";
-        qty.dispatchEvent(new Event("change", { bubbles: true }));
-      }
-    });
+    await customerName.fill("Jane Buyer");
+    await customerEmail.fill("jane@example.com");
+    await shippingAddress.fill("12 Market Street");
+    await quantity.fill("2");
+    await note.fill("Gift note");
+    await note.clear();
+
+    await page.selectOption("#shipping-speed", "express");
     await page.click("#apply-discount");
     await automatonExpect(page).element("#discount-output").toHaveText("Discount: applied");
     await automatonExpect(page).element("#customer-name").toHaveValue("Jane Buyer");
@@ -67,12 +66,42 @@ describe("ui app integration", () => {
     await automatonExpect(page).element("#theme-card").toHaveClass("theme-light");
     await automatonExpect(page).element("#theme-card").toHaveClasses(["card", "theme-light"]);
     await automatonExpect(page).element("#theme-card").toHaveCss("background-color", "rgb(10, 10, 10)");
-    await automatonExpect(page).element(".card").toHaveCount(5);
+    await automatonExpect(page).element(".card").toHaveCount(6);
 
     await automatonExpect(page).element("#summary-total").toHaveText("Total: $74.00");
 
+    await page.focus("#customer-email");
+    await page.press("#customer-email", "Tab");
+    await automatonExpect(page).element("#shipping-address").toHaveFocus();
+    await customerName.selectText();
+    const selectedRange = await page.evaluate(() => {
+      const input = document.querySelector("#customer-name");
+      if (!(input instanceof HTMLInputElement)) {
+        return null;
+      }
+      return [input.selectionStart, input.selectionEnd];
+    });
+    vitestExpect(selectedRange).toEqual([0, "Jane Buyer".length]);
+
     await page.dblclick("#place-order");
     await automatonExpect(page).element("#order-status").toHaveText("Status: placed for jane@example.com");
+
+    await page.hover("#hover-target");
+    await automatonExpect(page).element("#hover-output").toHaveText("Hover: active");
+
+    await promoOptin.check();
+    await automatonExpect(page).element("#promo-status").toHaveText("Promo: on");
+    await promoOptin.uncheck();
+    await automatonExpect(page).element("#promo-status").toHaveText("Promo: off");
+    await promoOptin.setChecked(true);
+    await automatonExpect(page).element("#promo-optin").toBeChecked();
+    await promoOptin.setChecked(false);
+    await automatonExpect(page).element("#promo-optin").toBeUnchecked();
+
+    const uploadPath = path.join(artifactsDir, "receipt.txt");
+    fs.writeFileSync(uploadPath, "receipt data", "utf-8");
+    await receiptFile.setInputFiles(uploadPath);
+    await automatonExpect(page).element("#receipt-status").toHaveText("Receipt: receipt.txt");
 
     await page.click("#shadow-host >>> #shadow-button");
     await automatonExpect(page).element("#shadow-host >>> #shadow-output").toHaveText("Shadow: clicked");
@@ -92,34 +121,16 @@ describe("ui app integration", () => {
     const secureText = await page.textSecure("#secure-text");
     vitestExpect(secureText).toBe("token: abc123");
 
-    await page.evaluate(() => {
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.id = "promo-optin";
-      checkbox.checked = true;
-      document.body.appendChild(checkbox);
-    });
-    await automatonExpect(page).element("#promo-optin").toBeChecked();
-    await page.evaluate(() => {
-      const checkbox = document.querySelector("#promo-optin");
-      if (checkbox instanceof HTMLInputElement) {
-        checkbox.checked = false;
-      }
-    });
-    await automatonExpect(page).element("#promo-optin").toBeUnchecked();
-
-    await page.evaluate(() => {
-      const email = document.querySelector("#customer-email");
-      if (email instanceof HTMLElement) {
-        email.focus();
-      }
-    });
-    await automatonExpect(page).element("#customer-email").toHaveFocus();
     await automatonExpect(page).element("#customer-email").toBeEditable();
-
-    await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+    await page.scrollIntoViewIfNeeded("#scroll-target");
     await automatonExpect(page).element("#scroll-target").toExist();
     await automatonExpect(page).element("#scroll-target").toBeInViewport();
+
+    await page.clear("#product-note");
+    vitestExpect(await page.evaluate(() => {
+      const input = document.querySelector("#product-note");
+      return input instanceof HTMLInputElement ? input.value : null;
+    })).toBe("");
 
     await page.evaluate(() => {
       const discount = document.querySelector("#discount-output");
@@ -129,7 +140,6 @@ describe("ui app integration", () => {
     });
     await automatonExpect(page).element("#discount-output").toBeHidden();
 
-    const artifactsDir = path.resolve(process.cwd(), "tests", "artifacts");
     fs.mkdirSync(artifactsDir, { recursive: true });
     const screenshotPath = path.join(artifactsDir, `ui-app-${Date.now()}.png`);
     await page.screenshot({ path: screenshotPath, format: "png" });

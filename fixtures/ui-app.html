@@ -143,6 +143,24 @@
     <p id="discount-output">Discount: none</p>
   </div>
 
+  <div class="card" id="extras-card">
+    <h2>Extras</h2>
+    <div class="row">
+      <button id="hover-target">Hover Target</button>
+      <label class="row" style="align-items:center; gap:8px;">
+        <input id="promo-optin" type="checkbox" />
+        <span>Promo Opt-in</span>
+      </label>
+      <label class="field">
+        <span>Receipt Upload</span>
+        <input id="receipt-file" type="file" />
+      </label>
+    </div>
+    <p id="hover-output">Hover: idle</p>
+    <p id="promo-status">Promo: off</p>
+    <p id="receipt-status">Receipt: none</p>
+  </div>
+
   <div class="card" id="summary-card">
     <h2>Summary</h2>
     <p id="summary-customer">Customer: -</p>
@@ -172,6 +190,12 @@
     const productNote = document.getElementById("product-note");
     const applyDiscount = document.getElementById("apply-discount");
     const discountOutput = document.getElementById("discount-output");
+    const hoverTarget = document.getElementById("hover-target");
+    const hoverOutput = document.getElementById("hover-output");
+    const promoOptin = document.getElementById("promo-optin");
+    const promoStatus = document.getElementById("promo-status");
+    const receiptFile = document.getElementById("receipt-file");
+    const receiptStatus = document.getElementById("receipt-status");
     const placeOrder = document.getElementById("place-order");
     const orderStatus = document.getElementById("order-status");
     const summaryCustomer = document.getElementById("summary-customer");
@@ -198,6 +222,18 @@
     applyDiscount.addEventListener("click", () => {
       discountOutput.textContent = "Discount: applied";
       updateSummary();
+    });
+
+    hoverTarget.addEventListener("mouseenter", () => {
+      hoverOutput.textContent = "Hover: active";
+    });
+
+    promoOptin.addEventListener("change", () => {
+      promoStatus.textContent = promoOptin.checked ? "Promo: on" : "Promo: off";
+    });
+
+    receiptFile.addEventListener("change", () => {
+      receiptStatus.textContent = receiptFile.files && receiptFile.files[0] ? `Receipt: ${receiptFile.files[0].name}` : "Receipt: none";
     });
 
     [customerName, shippingSpeed, productQty].forEach((el) => {

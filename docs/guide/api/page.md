@@ -68,12 +68,25 @@ await page.click("#submit");
 await page.dblclick(".row");
 await page.type("#email", "user@example.com");
 await page.typeSecure("#password", "s3cr3t");
-await page.fillInput("#seed", "42");
+await page.fill("#seed", "42");
+await page.clear("#seed");
+await page.focus("#email");
+await page.blur("#email");
+await page.hover("#help-icon");
+await page.press("#email", "Tab");
+await page.selectText("#seed");
+await page.scrollIntoViewIfNeeded("#footer");
+await page.check("#promo-optin");
+await page.uncheck("#promo-optin");
+await page.setChecked("#promo-optin", true);
 await page.selectOption("#state", "NSW");
 await page.setFileInput("#resume", "resume.txt", "contents", { mimeType: "text/plain" });
+await page.setInputFiles("#resume", "resume.txt");
 ```
 
 `typeSecure()` and the secure text helpers mark log output as sensitive.
+`fill()` is the Playwright-style field entry helper, while `type()` keeps the character-by-character flow for special keyboard handling.
+`setInputFiles()` accepts file paths or inline file objects, and `setFileInput()` remains as a convenience alias for a single synthetic file.
 
 ## Inspect state
 

@@ -35,6 +35,17 @@ export type TypeOptions = {
   sensitive?: boolean;
 };
 
+export type InputFile = {
+  name: string;
+  contents: string | Buffer;
+  mimeType?: string;
+};
+
+export type SetInputFilesOptions = {
+  timeoutMs?: number;
+  mimeType?: string;
+};
+
 export type QueryResult = {
   objectId: string;
   contextId: number;
@@ -167,6 +178,10 @@ export class Frame {
     return this.type(selector, text, { ...options, sensitive: true });
   }
 
+  async fill(selector: string, value: string, options: { timeoutMs?: number } = {}) {
+    return this.fillInput(selector, value, options);
+  }
+
   async fillInput(selector: string, value: string, options: { timeoutMs?: number } = {}) {
     const start = Date.now();
     this.events.emit("action:start", { name: "fillInput", selector, frameId: this.id });
@@ -195,10 +210,14 @@ export class Frame {
         };
         const el = findDeep(selector);
         if (!el) return false;
-        if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement)) {
+        if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement || el.isContentEditable)) {
           return false;
         }
-        el.value = ${JSON.stringify(value)};
+        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+          el.value = ${JSON.stringify(value)};
+        } else {
+          el.textContent = ${JSON.stringify(value)};
+        }
         el.dispatchEvent(new Event("input", { bubbles: true }));
         el.dispatchEvent(new Event("change", { bubbles: true }));
         return true;
@@ -216,6 +235,188 @@ export class Frame {
     const duration = Date.now() - start;
     this.events.emit("action:end", { name: "fillInput", selector, frameId: this.id, durationMs: duration });
     this.logger.debug("FillInput", selector, `${duration}ms`);
+  }
+
+  async clear(selector: string, options: { timeoutMs?: number } = {}) {
+    return this.fillInput(selector, "", options);
+  }
+
+  async focus(selector: string, options: { timeoutMs?: number } = {}) {
+    const start = Date.now();
+    this.events.emit("action:start", { name: "focus", selector, frameId: this.id });
+    await waitFor(async () => {
+      const focused = await this.evalOnSelector<boolean | null>(selector, options, false, `
+        if (!el || !(el instanceof HTMLElement)) {
+          return false;
+        }
+        el.focus();
+        return document.activeElement === el;
+      `);
+      return Boolean(focused);
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `focus ${selector}` });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "focus", selector, frameId: this.id, durationMs: duration });
+    this.logger.debug("Focus", selector, `${duration}ms`);
+  }
+
+  async blur(selector: string, options: { timeoutMs?: number } = {}) {
+    const start = Date.now();
+    this.events.emit("action:start", { name: "blur", selector, frameId: this.id });
+    await waitFor(async () => {
+      const blurred = await this.evalOnSelector<boolean | null>(selector, options, false, `
+        if (!el || !(el instanceof HTMLElement)) {
+          return false;
+        }
+        el.blur();
+        return document.activeElement !== el;
+      `);
+      return Boolean(blurred);
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `blur ${selector}` });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "blur", selector, frameId: this.id, durationMs: duration });
+    this.logger.debug("Blur", selector, `${duration}ms`);
+  }
+
+  async hover(selector: string, options: { timeoutMs?: number } = {}) {
+    const start = Date.now();
+    this.events.emit("action:start", { name: "hover", selector, frameId: this.id });
+    const box = await waitFor(async () => {
+      const result = await this.resolveElementBox(selector, options);
+      if (!result || !result.visible) {
+        return null;
+      }
+      return result;
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `hover ${selector}` });
+    const centerX = box.x + box.width / 2;
+    const centerY = box.y + box.height / 2;
+    await this.session.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: centerX, y: centerY });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "hover", selector, frameId: this.id, durationMs: duration });
+    this.logger.debug("Hover", selector, `${duration}ms`);
+  }
+
+  async press(selector: string, key: string, options: { timeoutMs?: number } = {}) {
+    const start = Date.now();
+    this.events.emit("action:start", { name: "press", selector, frameId: this.id });
+    await this.focus(selector, options);
+    await this.dispatchKey(key);
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "press", selector, frameId: this.id, durationMs: duration });
+    this.logger.debug("Press", selector, `${duration}ms`);
+  }
+
+  async selectText(selector: string, options: { timeoutMs?: number } = {}) {
+    const start = Date.now();
+    this.events.emit("action:start", { name: "selectText", selector, frameId: this.id });
+    await waitFor(async () => {
+      const selected = await this.evalOnSelector<boolean | null>(selector, options, false, `
+        if (!el) {
+          return false;
+        }
+        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+          el.focus();
+          el.select();
+          return true;
+        }
+        if (el.isContentEditable) {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const selection = window.getSelection();
+          if (!selection) {
+            return false;
+          }
+          selection.removeAllRanges();
+          selection.addRange(range);
+          return true;
+        }
+        return false;
+      `);
+      return Boolean(selected);
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `selectText ${selector}` });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "selectText", selector, frameId: this.id, durationMs: duration });
+    this.logger.debug("SelectText", selector, `${duration}ms`);
+  }
+
+  async scrollIntoViewIfNeeded(selector: string, options: { timeoutMs?: number } = {}) {
+    const start = Date.now();
+    this.events.emit("action:start", { name: "scrollIntoViewIfNeeded", selector, frameId: this.id });
+    await waitFor(async () => {
+      const scrolled = await this.evalOnSelector<boolean | null>(selector, options, false, `
+        if (!el || !(el instanceof Element)) {
+          return false;
+        }
+        el.scrollIntoView({ block: "center", inline: "center" });
+        return true;
+      `);
+      return Boolean(scrolled);
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `scrollIntoViewIfNeeded ${selector}` });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "scrollIntoViewIfNeeded", selector, frameId: this.id, durationMs: duration });
+    this.logger.debug("ScrollIntoViewIfNeeded", selector, `${duration}ms`);
+  }
+
+  async check(selector: string, options: { timeoutMs?: number } = {}) {
+    return this.setChecked(selector, true, options);
+  }
+
+  async uncheck(selector: string, options: { timeoutMs?: number } = {}) {
+    return this.setChecked(selector, false, options);
+  }
+
+  async setChecked(selector: string, checked: boolean, options: { timeoutMs?: number } = {}) {
+    const start = Date.now();
+    const actionName = checked ? "check" : "uncheck";
+    this.events.emit("action:start", { name: actionName, selector, frameId: this.id });
+    await waitFor(async () => {
+      const result = await this.evalOnSelector<boolean | null>(selector, options, false, `
+        if (!el || !(el instanceof HTMLInputElement)) {
+          return false;
+        }
+        const shouldCheck = ${checked ? "true" : "false"};
+        if (el.checked === shouldCheck) {
+          return true;
+        }
+        el.checked = shouldCheck;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        return el.checked === shouldCheck;
+      `);
+      return Boolean(result);
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `${actionName} ${selector}` });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: actionName, selector, frameId: this.id, durationMs: duration });
+    this.logger.debug(actionName === "check" ? "Check" : "Uncheck", selector, `${duration}ms`);
+  }
+
+  async setInputFiles(selector: string, files: string | string[] | InputFile | InputFile[], options: SetInputFilesOptions = {}) {
+    const start = Date.now();
+    this.events.emit("action:start", { name: "setInputFiles", selector, frameId: this.id });
+    const normalized = this.normalizeInputFiles(files, options);
+    await waitFor(async () => {
+      const result = await this.evalOnSelector<boolean | null>(selector, options, false, `
+        if (!el || !(el instanceof HTMLInputElement) || el.type !== "file") {
+          return false;
+        }
+        const encoded = ${JSON.stringify(normalized)};
+        const fileList = encoded.map((file) => {
+          const bytes = Uint8Array.from(atob(file.base64), (ch) => ch.charCodeAt(0));
+          return new File([bytes], file.name, { type: file.mimeType });
+        });
+        const dataTransfer = new DataTransfer();
+        for (const file of fileList) {
+          dataTransfer.items.add(file);
+        }
+        el.files = dataTransfer.files;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        return el.files.length === fileList.length;
+      `);
+      return Boolean(result);
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `setInputFiles ${selector}` });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "setInputFiles", selector, frameId: this.id, durationMs: duration });
+    this.logger.debug("SetInputFiles", selector, `${duration}ms`);
   }
 
   async findLocators(options: { highlight?: boolean; outputPath?: string; outputJson?: string; outputHtml?: string } = {}) {
@@ -603,6 +804,224 @@ export class Frame {
     this.logger.debug("Type", description, `${duration}ms`);
   }
 
+  async fillLocator(query: LocatorQuery, value: string, options: { timeoutMs?: number } = {}) {
+    const description = this.locatorDescription(query);
+    const start = Date.now();
+    this.events.emit("action:start", { name: "fillInput", selector: description, frameId: this.id });
+    await waitFor(async () => {
+      const result = await this.evalOnLocator<boolean | null>(query, false, `
+        if (!el) {
+          return false;
+        }
+        if (!(el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement || el.isContentEditable)) {
+          return false;
+        }
+        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+          el.value = ${JSON.stringify(value)};
+        } else {
+          el.textContent = ${JSON.stringify(value)};
+        }
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        return true;
+      `);
+      return Boolean(result);
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `fillInput ${description}` });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "fillInput", selector: description, frameId: this.id, durationMs: duration });
+    this.logger.debug("FillInput", description, `${duration}ms`);
+  }
+
+  async clearLocator(query: LocatorQuery, options: { timeoutMs?: number } = {}) {
+    return this.fillLocator(query, "", options);
+  }
+
+  async focusLocator(query: LocatorQuery, options: { timeoutMs?: number } = {}) {
+    const description = this.locatorDescription(query);
+    const start = Date.now();
+    this.events.emit("action:start", { name: "focus", selector: description, frameId: this.id });
+    await waitFor(async () => {
+      const focused = await this.evalOnLocator<boolean | null>(query, false, `
+        if (!el || !(el instanceof HTMLElement)) {
+          return false;
+        }
+        el.focus();
+        return document.activeElement === el;
+      `);
+      return Boolean(focused);
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `focus ${description}` });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "focus", selector: description, frameId: this.id, durationMs: duration });
+    this.logger.debug("Focus", description, `${duration}ms`);
+  }
+
+  async blurLocator(query: LocatorQuery, options: { timeoutMs?: number } = {}) {
+    const description = this.locatorDescription(query);
+    const start = Date.now();
+    this.events.emit("action:start", { name: "blur", selector: description, frameId: this.id });
+    await waitFor(async () => {
+      const blurred = await this.evalOnLocator<boolean | null>(query, false, `
+        if (!el || !(el instanceof HTMLElement)) {
+          return false;
+        }
+        el.blur();
+        return document.activeElement !== el;
+      `);
+      return Boolean(blurred);
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `blur ${description}` });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "blur", selector: description, frameId: this.id, durationMs: duration });
+    this.logger.debug("Blur", description, `${duration}ms`);
+  }
+
+  async hoverLocator(query: LocatorQuery, options: { timeoutMs?: number } = {}) {
+    const description = this.locatorDescription(query);
+    const start = Date.now();
+    this.events.emit("action:start", { name: "hover", selector: description, frameId: this.id });
+    const box = await waitFor(async () => {
+      const result = await this.resolveLocatorElementBox(query, options);
+      if (!result || !result.visible) {
+        return null;
+      }
+      return result;
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `hover ${description}` });
+    const centerX = box.x + box.width / 2;
+    const centerY = box.y + box.height / 2;
+    await this.session.send("Input.dispatchMouseEvent", { type: "mouseMoved", x: centerX, y: centerY });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "hover", selector: description, frameId: this.id, durationMs: duration });
+    this.logger.debug("Hover", description, `${duration}ms`);
+  }
+
+  async pressLocator(query: LocatorQuery, key: string, options: { timeoutMs?: number } = {}) {
+    const description = this.locatorDescription(query);
+    const start = Date.now();
+    this.events.emit("action:start", { name: "press", selector: description, frameId: this.id });
+    await this.focusLocator(query, options);
+    await this.dispatchKey(key);
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "press", selector: description, frameId: this.id, durationMs: duration });
+    this.logger.debug("Press", description, `${duration}ms`);
+  }
+
+  async selectTextLocator(query: LocatorQuery, options: { timeoutMs?: number } = {}) {
+    const description = this.locatorDescription(query);
+    const start = Date.now();
+    this.events.emit("action:start", { name: "selectText", selector: description, frameId: this.id });
+    await waitFor(async () => {
+      const selected = await this.evalOnLocator<boolean | null>(query, false, `
+        if (!el) {
+          return false;
+        }
+        if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+          el.focus();
+          el.select();
+          return true;
+        }
+        if (el.isContentEditable) {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          const selection = window.getSelection();
+          if (!selection) {
+            return false;
+          }
+          selection.removeAllRanges();
+          selection.addRange(range);
+          return true;
+        }
+        return false;
+      `);
+      return Boolean(selected);
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `selectText ${description}` });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "selectText", selector: description, frameId: this.id, durationMs: duration });
+    this.logger.debug("SelectText", description, `${duration}ms`);
+  }
+
+  async scrollIntoViewIfNeededLocator(query: LocatorQuery, options: { timeoutMs?: number } = {}) {
+    const description = this.locatorDescription(query);
+    const start = Date.now();
+    this.events.emit("action:start", { name: "scrollIntoViewIfNeeded", selector: description, frameId: this.id });
+    await waitFor(async () => {
+      const scrolled = await this.evalOnLocator<boolean | null>(query, false, `
+        if (!el || !(el instanceof Element)) {
+          return false;
+        }
+        el.scrollIntoView({ block: "center", inline: "center" });
+        return true;
+      `);
+      return Boolean(scrolled);
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `scrollIntoViewIfNeeded ${description}` });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "scrollIntoViewIfNeeded", selector: description, frameId: this.id, durationMs: duration });
+    this.logger.debug("ScrollIntoViewIfNeeded", description, `${duration}ms`);
+  }
+
+  async checkLocator(query: LocatorQuery, options: { timeoutMs?: number } = {}) {
+    return this.setCheckedLocator(query, true, options);
+  }
+
+  async uncheckLocator(query: LocatorQuery, options: { timeoutMs?: number } = {}) {
+    return this.setCheckedLocator(query, false, options);
+  }
+
+  async setCheckedLocator(query: LocatorQuery, checked: boolean, options: { timeoutMs?: number } = {}) {
+    const description = this.locatorDescription(query);
+    const start = Date.now();
+    const actionName = checked ? "check" : "uncheck";
+    this.events.emit("action:start", { name: actionName, selector: description, frameId: this.id });
+    await waitFor(async () => {
+      const result = await this.evalOnLocator<boolean | null>(query, false, `
+        if (!el || !(el instanceof HTMLInputElement)) {
+          return false;
+        }
+        const shouldCheck = ${checked ? "true" : "false"};
+        if (el.checked === shouldCheck) {
+          return true;
+        }
+        el.checked = shouldCheck;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        return el.checked === shouldCheck;
+      `);
+      return Boolean(result);
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `${actionName} ${description}` });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: actionName, selector: description, frameId: this.id, durationMs: duration });
+    this.logger.debug(actionName === "check" ? "Check" : "Uncheck", description, `${duration}ms`);
+  }
+
+  async setInputFilesLocator(query: LocatorQuery, files: string | string[] | InputFile | InputFile[], options: SetInputFilesOptions = {}) {
+    const description = this.locatorDescription(query);
+    const start = Date.now();
+    this.events.emit("action:start", { name: "setInputFiles", selector: description, frameId: this.id });
+    const normalized = this.normalizeInputFiles(files, options);
+    await waitFor(async () => {
+      const result = await this.evalOnLocator<boolean | null>(query, false, `
+        if (!el || !(el instanceof HTMLInputElement) || el.type !== "file") {
+          return false;
+        }
+        const encoded = ${JSON.stringify(normalized)};
+        const fileList = encoded.map((file) => {
+          const bytes = Uint8Array.from(atob(file.base64), (ch) => ch.charCodeAt(0));
+          return new File([bytes], file.name, { type: file.mimeType });
+        });
+        const dataTransfer = new DataTransfer();
+        for (const file of fileList) {
+          dataTransfer.items.add(file);
+        }
+        el.files = dataTransfer.files;
+        el.dispatchEvent(new Event("input", { bubbles: true }));
+        el.dispatchEvent(new Event("change", { bubbles: true }));
+        return el.files.length === fileList.length;
+      `);
+      return Boolean(result);
+    }, { timeoutMs: options.timeoutMs ?? this.defaultTimeout, description: `setInputFiles ${description}` });
+    const duration = Date.now() - start;
+    this.events.emit("action:end", { name: "setInputFiles", selector: description, frameId: this.id, durationMs: duration });
+    this.logger.debug("SetInputFiles", description, `${duration}ms`);
+  }
+
   async existsLocator(query: LocatorQuery) {
     return Boolean(await this.evalOnLocator<boolean | null>(query, false, `
       return Boolean(el);
@@ -796,24 +1215,7 @@ export class Frame {
   }
 
   async setFileInput(selector: string, name: string, contents: string, options: { mimeType?: string } = {}) {
-    await this.waitForSelectorPresence(selector, {}, false, `setFileInput ${selector}`);
-    await this.evaluate(
-      (sel, fileName, text, mime) => {
-        const input = document.querySelector(sel);
-        if (!(input instanceof HTMLInputElement)) return false;
-        const file = new File([text], fileName, { type: mime || "text/plain" });
-        const data = new DataTransfer();
-        data.items.add(file);
-        input.files = data.files;
-        input.dispatchEvent(new Event("input", { bubbles: true }));
-        input.dispatchEvent(new Event("change", { bubbles: true }));
-        return true;
-      },
-      selector,
-      name,
-      contents,
-      options.mimeType || "text/plain"
-    );
+    return this.setInputFiles(selector, { name, contents, mimeType: options.mimeType || "text/plain" });
   }
 
   async attribute(selector: string, name: string, options: FrameSelectorOptions = {}) {
@@ -1480,6 +1882,92 @@ export class Frame {
       `);
       return present ? true : null;
     }, { timeoutMs, description });
+  }
+
+  private async dispatchKey(key: string) {
+    const keyInfo = this.normalizeKey(key);
+    await this.session.send("Input.dispatchKeyEvent", {
+      type: "keyDown",
+      key: keyInfo.key,
+      code: keyInfo.code,
+      text: keyInfo.text,
+      unmodifiedText: keyInfo.text,
+      windowsVirtualKeyCode: keyInfo.windowsVirtualKeyCode,
+      nativeVirtualKeyCode: keyInfo.windowsVirtualKeyCode,
+      autoRepeat: false,
+      isKeypad: false,
+      isSystemKey: false,
+      location: 0
+    });
+    await this.session.send("Input.dispatchKeyEvent", {
+      type: "keyUp",
+      key: keyInfo.key,
+      code: keyInfo.code,
+      windowsVirtualKeyCode: keyInfo.windowsVirtualKeyCode,
+      nativeVirtualKeyCode: keyInfo.windowsVirtualKeyCode,
+      location: 0
+    });
+  }
+
+  private normalizeKey(key: string) {
+    const trimmed = key.trim();
+    const specialKeys: Record<string, { key: string; code: string; windowsVirtualKeyCode: number; text?: string }> = {
+      Enter: { key: "Enter", code: "Enter", windowsVirtualKeyCode: 13, text: "\r" },
+      Tab: { key: "Tab", code: "Tab", windowsVirtualKeyCode: 9, text: "\t" },
+      Escape: { key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 },
+      Esc: { key: "Escape", code: "Escape", windowsVirtualKeyCode: 27 },
+      Backspace: { key: "Backspace", code: "Backspace", windowsVirtualKeyCode: 8 },
+      Delete: { key: "Delete", code: "Delete", windowsVirtualKeyCode: 46 },
+      Space: { key: " ", code: "Space", windowsVirtualKeyCode: 32, text: " " },
+      ArrowLeft: { key: "ArrowLeft", code: "ArrowLeft", windowsVirtualKeyCode: 37 },
+      ArrowRight: { key: "ArrowRight", code: "ArrowRight", windowsVirtualKeyCode: 39 },
+      ArrowUp: { key: "ArrowUp", code: "ArrowUp", windowsVirtualKeyCode: 38 },
+      ArrowDown: { key: "ArrowDown", code: "ArrowDown", windowsVirtualKeyCode: 40 },
+      Home: { key: "Home", code: "Home", windowsVirtualKeyCode: 36 },
+      End: { key: "End", code: "End", windowsVirtualKeyCode: 35 },
+      PageUp: { key: "PageUp", code: "PageUp", windowsVirtualKeyCode: 33 },
+      PageDown: { key: "PageDown", code: "PageDown", windowsVirtualKeyCode: 34 }
+    };
+    const special = specialKeys[trimmed];
+    if (special) {
+      return special;
+    }
+    if (trimmed.length === 1) {
+      const upper = trimmed.toUpperCase();
+      const isLetter = /^[A-Z]$/.test(upper);
+      return {
+        key: trimmed,
+        code: isLetter ? `Key${upper}` : trimmed,
+        windowsVirtualKeyCode: trimmed.charCodeAt(0),
+        text: trimmed
+      };
+    }
+    return {
+      key: trimmed,
+      code: trimmed,
+      windowsVirtualKeyCode: 0
+    };
+  }
+
+  private normalizeInputFiles(files: string | string[] | InputFile | InputFile[], options: SetInputFilesOptions) {
+    const list = Array.isArray(files) ? files : [files];
+    return list.map((file) => {
+      if (typeof file === "string") {
+        const resolved = path.resolve(file);
+        const contents = fs.readFileSync(resolved);
+        return {
+          name: path.basename(resolved),
+          base64: contents.toString("base64"),
+          mimeType: options.mimeType ?? "application/octet-stream"
+        };
+      }
+      const buffer = Buffer.isBuffer(file.contents) ? file.contents : Buffer.from(file.contents);
+      return {
+        name: file.name,
+        base64: buffer.toString("base64"),
+        mimeType: file.mimeType ?? options.mimeType ?? "application/octet-stream"
+      };
+    });
   }
 }
 

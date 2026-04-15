@@ -84,6 +84,7 @@ args: process.platform === "linux" ? ["--no-sandbox", "--no-zygote", "--disable-
 - Scaffold: `cpw init test <runner>` writes a starter test file, a local HTML fixture, and an `npm test` script for Vitest, Mocha, or Node's built-in runner.
 - Scaffold templates are verified in CI for all supported runners.
 - Markdown export: `cpw markdown <url>` converts rendered pages into lightweight Markdown for AI workflows and note-taking.
+- UI helpers: `fill`, `clear`, `hover`, `press`, `focus`, `blur`, `check`, `uncheck`, `setChecked`, `selectText`, `scrollIntoViewIfNeeded`, and `setInputFiles` cover the common Playwright-style interaction flows.
 - Browser install: `npx cpw install` (or `--latest`) fetches Chromium into a local cache once, Playwright-style.
 
 ## Key APIs
@@ -91,7 +92,7 @@ args: process.platform === "linux" ? ["--no-sandbox", "--no-zygote", "--disable-
 - `browser.newContext()` → isolated `BrowserContext`
 - `browser.newPage()` / `context.newPage()` → `Page`
 - `page.goto(url, { waitUntil: "load" | "domcontentloaded" })`
-- Actions: `click`, `dblclick`, `type`, `typeSecure`, `fillInput`, `selectOption`, `setFileInput`
+- Actions: `click`, `dblclick`, `type`, `typeSecure`, `fill`, `clear`, `hover`, `press`, `focus`, `blur`, `check`, `uncheck`, `setChecked`, `selectText`, `scrollIntoViewIfNeeded`, `fillInput`, `selectOption`, `setFileInput`, `setInputFiles`
 - Queries: `query`, `queryAll`, `queryXPath`, `queryAllXPath`, `locator`
 - Assertions: `expect(page).element("selector").toBeVisible()` (see `docs/guide/assertions.md`)
 

@@ -24,13 +24,23 @@ await page.expect(welcome).toBeVisible();
 ## Common locator methods
 
 - `click()` / `dblclick()`
+- `fill(value)` / `clear()`
 - `type(text)`
+- `focus()` / `blur()`
+- `hover()`
+- `press(key)`
+- `selectText()`
+- `scrollIntoViewIfNeeded()`
+- `check()` / `uncheck()` / `setChecked(checked)`
+- `setInputFiles(files)`
 - `exists()` returns `boolean`
 - `isVisible()` / `isEnabled()` / `isChecked()`
 - `text()` returns `string | null`
 - `value()` / `attribute(name)` / `classes()` / `css(property)`
 - `hasFocus()` / `isInViewport()` / `isEditable()`
 - `count()` returns the number of matching elements
+
+For form entry, prefer `fill()` over `type()` when you want a direct value assignment and built-in waiting. Use `type()` when you need character-by-character input or custom key handling.
 
 ## Factory helpers
 

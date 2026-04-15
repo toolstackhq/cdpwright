@@ -159,12 +159,60 @@ export class Page {
     return this.mainFrame().dblclick(selector, options);
   }
 
+  async fill(selector: string, value: string, options: { timeoutMs?: number } = {}) {
+    return this.mainFrame().fill(selector, value, options);
+  }
+
   async type(selector: string, text: string, options?: { timeoutMs?: number }) {
     return this.mainFrame().type(selector, text, options);
   }
 
   async typeSecure(selector: string, text: string, options?: { timeoutMs?: number }) {
     return this.mainFrame().typeSecure(selector, text, options);
+  }
+
+  async clear(selector: string, options: { timeoutMs?: number } = {}) {
+    return this.mainFrame().clear(selector, options);
+  }
+
+  async focus(selector: string, options: { timeoutMs?: number } = {}) {
+    return this.mainFrame().focus(selector, options);
+  }
+
+  async blur(selector: string, options: { timeoutMs?: number } = {}) {
+    return this.mainFrame().blur(selector, options);
+  }
+
+  async hover(selector: string, options: { timeoutMs?: number } = {}) {
+    return this.mainFrame().hover(selector, options);
+  }
+
+  async press(selector: string, key: string, options: { timeoutMs?: number } = {}) {
+    return this.mainFrame().press(selector, key, options);
+  }
+
+  async selectText(selector: string, options: { timeoutMs?: number } = {}) {
+    return this.mainFrame().selectText(selector, options);
+  }
+
+  async scrollIntoViewIfNeeded(selector: string, options: { timeoutMs?: number } = {}) {
+    return this.mainFrame().scrollIntoViewIfNeeded(selector, options);
+  }
+
+  async check(selector: string, options: { timeoutMs?: number } = {}) {
+    return this.mainFrame().check(selector, options);
+  }
+
+  async uncheck(selector: string, options: { timeoutMs?: number } = {}) {
+    return this.mainFrame().uncheck(selector, options);
+  }
+
+  async setChecked(selector: string, checked: boolean, options: { timeoutMs?: number } = {}) {
+    return this.mainFrame().setChecked(selector, checked, options);
+  }
+
+  async setInputFiles(selector: string, files: string | string[] | { name: string; contents: string | Buffer; mimeType?: string } | Array<{ name: string; contents: string | Buffer; mimeType?: string }>, options: { timeoutMs?: number; mimeType?: string } = {}) {
+    return this.mainFrame().setInputFiles(selector, files, options);
   }
 
   async fillInput(selector: string, value: string, options: { timeoutMs?: number } = {}) {

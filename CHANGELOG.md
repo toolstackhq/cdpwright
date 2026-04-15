@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.3
+- Added Playwright-style UI helpers: `fill`, `clear`, `hover`, `press`, `focus`, `blur`, `check`, `uncheck`, `setChecked`, `selectText`, `scrollIntoViewIfNeeded`, and `setInputFiles`.
+- Routed selector-based locator helpers through the stable selector path for better reliability.
+- Documented the new interaction helpers in the README and API guides.
+
 ## 1.4.2
 - Fixed `cpw markdown` to snapshot the page DOM into a JSON-safe tree before serializing to Markdown.
 - Allowed the export commands to read local `file://` pages for offline fixtures and local docs workflows.
