@@ -22,10 +22,9 @@ type RunnerPreset = {
   testFileContent: string;
   testScript: string;
   testWatchScript?: string;
+  devDependencies: Record<string, string>;
   extraFiles: Array<{ path: string; content: string }>;
 };
-
-const DEFAULT_TARGET_URL = "https://example.com";
 
 export function normalizeTestRunner(value: string | undefined): TestRunner | null {
   if (!value) return null;
@@ -55,6 +54,13 @@ export function scaffoldTestSuite(options: ScaffoldTestSuiteOptions): ScaffoldTe
     scripts["test:watch"] = preset.testWatchScript;
   }
   pkg.scripts = scripts;
+  const devDependencies = isRecord(pkg.devDependencies) ? { ...pkg.devDependencies } : {};
+  for (const [name, version] of Object.entries(preset.devDependencies)) {
+    devDependencies[name] = version;
+  }
+  if (Object.keys(devDependencies).length > 0) {
+    pkg.devDependencies = devDependencies;
+  }
 
   writeJson(packageJsonPath, pkg);
   writeFile(rootDir, preset.testFilePath, preset.testFileContent);
@@ -79,7 +85,15 @@ function buildRunnerPreset(runner: TestRunner): RunnerPreset {
       testFileContent: vitestTemplate(),
       testScript: "npx vitest run",
       testWatchScript: "npx vitest",
-      extraFiles: [],
+      devDependencies: {
+        vitest: "^2.1.9",
+      },
+      extraFiles: [
+        {
+          path: path.join("tests", "cpw.html"),
+          content: fixtureHtml(),
+        },
+      ],
     };
   }
 
@@ -89,7 +103,15 @@ function buildRunnerPreset(runner: TestRunner): RunnerPreset {
       testFileContent: mochaTemplate(),
       testScript: 'npx mocha "test/**/*.spec.mjs"',
       testWatchScript: 'npx mocha "test/**/*.spec.mjs" --watch',
-      extraFiles: [],
+      devDependencies: {
+        mocha: "^11.7.5",
+      },
+      extraFiles: [
+        {
+          path: path.join("test", "cpw.html"),
+          content: fixtureHtml(),
+        },
+      ],
     };
   }
 
@@ -97,20 +119,30 @@ function buildRunnerPreset(runner: TestRunner): RunnerPreset {
     testFilePath: path.join("test", "cpw.test.mjs"),
     testFileContent: nodeTestTemplate(),
     testScript: "node --test",
-    extraFiles: [],
+    devDependencies: {},
+    extraFiles: [
+      {
+        path: path.join("test", "cpw.html"),
+        content: fixtureHtml(),
+      },
+    ],
   };
 }
 
 function vitestTemplate() {
-  return `import { describe, expect, it } from "vitest";
+  return `import path from "node:path";
+import { pathToFileURL } from "node:url";
+import { describe, expect, it } from "vitest";
 import { chromium } from "@toolstackhq/cdpwright";
+
+const fixtureUrl = pathToFileURL(path.resolve("tests", "cpw.html")).toString();
 
 describe("login flow", () => {
   it("opens the dashboard link", async () => {
     await chromium.withBrowser({ headless: true }, async (browser) => {
       const page = await browser.newPage();
-      await page.goto(${JSON.stringify(DEFAULT_TARGET_URL)}, { waitUntil: "load" });
-      await expect(page).element("h1").toHaveText(/Example Domain/);
+      await page.goto(fixtureUrl, { allowFileUrl: true, waitUntil: "load" });
+      await expect(page).element("h1").toHaveText("Example Domain");
     });
   });
 });
@@ -119,15 +151,18 @@ describe("login flow", () => {
 
 function mochaTemplate() {
   return `import assert from "node:assert/strict";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { chromium } from "@toolstackhq/cdpwright";
+
+const fixtureUrl = pathToFileURL(path.resolve("test", "cpw.html")).toString();
 
 describe("login flow", () => {
   it("opens the dashboard link", async () => {
     await chromium.withBrowser({ headless: true }, async (browser) => {
       const page = await browser.newPage();
-      await page.goto(${JSON.stringify(DEFAULT_TARGET_URL)}, { waitUntil: "load" });
-      const title = await page.evaluate(() => document.title);
-      assert.equal(title, "Example Domain");
+      await page.goto(fixtureUrl, { allowFileUrl: true, waitUntil: "load" });
+      assert.equal(await page.evaluate(() => document.title), "cpw scaffold");
     });
   });
 });
@@ -137,16 +172,34 @@ describe("login flow", () => {
 function nodeTestTemplate() {
   return `import test from "node:test";
 import assert from "node:assert/strict";
+import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { chromium } from "@toolstackhq/cdpwright";
+
+const fixtureUrl = pathToFileURL(path.resolve("test", "cpw.html")).toString();
 
 test("login flow", async () => {
   await chromium.withBrowser({ headless: true }, async (browser) => {
     const page = await browser.newPage();
-    await page.goto(${JSON.stringify(DEFAULT_TARGET_URL)}, { waitUntil: "load" });
+    await page.goto(fixtureUrl, { allowFileUrl: true, waitUntil: "load" });
     const title = await page.evaluate(() => document.title);
-    assert.equal(title, "Example Domain");
+    assert.equal(title, "cpw scaffold");
   });
 });
+`;
+}
+
+function fixtureHtml() {
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>cpw scaffold</title>
+  </head>
+  <body>
+    <h1>Example Domain</h1>
+  </body>
+</html>
 `;
 }
 

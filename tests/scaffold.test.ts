@@ -33,8 +33,10 @@ describe("test suite scaffold", () => {
 
     expect(result.testFilePath).toBe(path.join(root, "tests", "cpw.test.mjs"));
     expect(fs.existsSync(path.join(root, "tests", "cpw.test.mjs"))).toBe(true);
+    expect(fs.existsSync(path.join(root, "tests", "cpw.html"))).toBe(true);
     expect(pkg.scripts.test).toBe("npx vitest run");
     expect(pkg.scripts["test:watch"]).toBe("npx vitest");
+    expect(pkg.devDependencies.vitest).toBe("^2.1.9");
   });
 
   it("writes a mocha scaffold and scripts", () => {
@@ -44,8 +46,10 @@ describe("test suite scaffold", () => {
 
     expect(result.testFilePath).toBe(path.join(root, "test", "cpw.spec.mjs"));
     expect(fs.existsSync(path.join(root, "test", "cpw.spec.mjs"))).toBe(true);
+    expect(fs.existsSync(path.join(root, "test", "cpw.html"))).toBe(true);
     expect(pkg.scripts.test).toBe('npx mocha "test/**/*.spec.mjs"');
     expect(pkg.scripts["test:watch"]).toBe('npx mocha "test/**/*.spec.mjs" --watch');
+    expect(pkg.devDependencies.mocha).toBe("^11.7.5");
   });
 
   it("writes a node:test scaffold and scripts", () => {
@@ -55,7 +59,9 @@ describe("test suite scaffold", () => {
 
     expect(result.testFilePath).toBe(path.join(root, "test", "cpw.test.mjs"));
     expect(fs.existsSync(path.join(root, "test", "cpw.test.mjs"))).toBe(true);
+    expect(fs.existsSync(path.join(root, "test", "cpw.html"))).toBe(true);
     expect(pkg.scripts.test).toBe("node --test");
     expect(pkg.scripts["test:watch"]).toBeUndefined();
+    expect(pkg.devDependencies).toBeUndefined();
   });
 });

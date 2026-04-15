@@ -58,7 +58,7 @@ npx cpw init test mocha
 npx cpw init test node
 ```
 
-Each preset writes a sample test file and adds an `npm test` script to `package.json`.
+Each preset writes a sample test file, a local HTML fixture, and adds an `npm test` script to `package.json`.
 
 Those starter templates are verified in CI for Vitest, Mocha, and Node's built-in runner.
 

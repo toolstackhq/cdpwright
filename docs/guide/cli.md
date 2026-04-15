@@ -77,7 +77,7 @@ npx cpw install --url <url>    # use an exact zip URL
 
 ### `cpw init test <runner>`
 
-Scaffold a starter test suite and update `package.json` with an `npm test` script.
+Scaffold a starter test suite and update `package.json` with an `npm test` script and the matching runner dependency.
 
 Supported runners:
 
@@ -87,7 +87,7 @@ npx cpw init test mocha
 npx cpw init test node
 ```
 
-The scaffold uses built-in `assert` for Mocha and Node's native runner, and `vitest`'s own `expect` for Vitest.
+The scaffold uses built-in `assert` for Mocha and Node's native runner, and `vitest`'s own `expect` for Vitest. It also writes a tiny local HTML fixture so the generated test runs offline.
 
 The templates are also checked in CI for all supported runners, so the generated starter suite stays in sync with the CLI.
 

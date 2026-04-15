@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cliPath = path.join(repoRoot, "dist", "cli.js");
+const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
 
 const presets = [
   {
@@ -42,9 +43,39 @@ for (const preset of runners) {
     JSON.stringify({ name: `scaffold-${preset.runner}`, version: "1.0.0" }, null, 2) + "\n"
   );
 
+  execFileSync(npmCmd, ["install", "--no-package-lock", "--save-dev", `file:${repoRoot}`], {
+    cwd: projectDir,
+    stdio: "inherit"
+  });
+
   execFileSync(process.execPath, [cliPath, "init", "test", preset.runner], {
     cwd: projectDir,
     stdio: "inherit"
+  });
+
+  execFileSync(npmCmd, ["install", "--no-package-lock"], {
+    cwd: projectDir,
+    stdio: "inherit"
+  });
+
+  execFileSync(npmCmd, ["exec", "--", "cpw", "install"], {
+    cwd: projectDir,
+    stdio: "inherit",
+    env: {
+      ...process.env,
+      CI: "true",
+      CDPWRIGHT_CACHE_DIR: path.join(projectDir, ".cdpwright-cache")
+    }
+  });
+
+  execFileSync(npmCmd, ["test"], {
+    cwd: projectDir,
+    stdio: "inherit",
+    env: {
+      ...process.env,
+      CI: "true",
+      CDPWRIGHT_CACHE_DIR: path.join(projectDir, ".cdpwright-cache")
+    }
   });
 
   const pkg = JSON.parse(fs.readFileSync(path.join(projectDir, "package.json"), "utf-8"));
@@ -56,5 +87,8 @@ for (const preset of runners) {
   }
   if (!fs.existsSync(path.join(projectDir, preset.testPath))) {
     throw new Error(`Missing scaffold test file for ${preset.runner}: ${preset.testPath}`);
+  }
+  if (!fs.existsSync(path.join(projectDir, preset.testPath.replace(/cpw\.(spec|test)\.mjs$/, "cpw.html")))) {
+    throw new Error(`Missing scaffold fixture file for ${preset.runner}`);
   }
 }
