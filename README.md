@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/toolstackhq/cdpwright/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/toolstackhq/cdpwright/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-vitest%20%2B%20integration-4caf50)](https://github.com/toolstackhq/cdpwright/actions/workflows/ci.yml)
+[![Suite](https://img.shields.io/badge/suite-44%20passing%20%2F%2044%20total-brightgreen)](https://github.com/toolstackhq/cdpwright/actions/workflows/ci.yml)
 [![Chromium version check](https://github.com/toolstackhq/cdpwright/actions/workflows/chromium-revision.yml/badge.svg?branch=main)](https://github.com/toolstackhq/cdpwright/actions/workflows/chromium-revision.yml)
 [![npm version](https://img.shields.io/npm/v/@toolstackhq/cdpwright)](https://www.npmjs.com/package/@toolstackhq/cdpwright)
 [![license](https://img.shields.io/npm/l/@toolstackhq/cdpwright)](https://github.com/toolstackhq/cdpwright/blob/main/LICENSE)
