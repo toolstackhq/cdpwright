@@ -22,12 +22,12 @@ If the default Google CDN is blocked (e.g. behind a corporate proxy), you can po
 ```bash
 # Set once — cdpwright appends /{platform}/{revision}/{zip} automatically
 export CDPWRIGHT_DOWNLOAD_MIRROR=https://artifactory.corp.com/chromium-snapshots
-npx cpw download
+npx cpw install
 ```
 
 Or via CLI flag:
 ```bash
-npx cpw download --mirror https://artifactory.corp.com/chromium-snapshots
+npx cpw install --mirror https://artifactory.corp.com/chromium-snapshots
 ```
 
 The mirror must replicate the same directory layout as the upstream (`Linux_x64/1567454/chrome-linux.zip`, etc). Most Artifactory remote/proxy repos do this automatically.
@@ -36,12 +36,12 @@ The mirror must replicate the same directory layout as the upstream (`Linux_x64/
 
 ```bash
 export CDPWRIGHT_DOWNLOAD_URL=https://internal.corp.com/bins/chrome-linux.zip
-npx cpw download
+npx cpw install
 ```
 
 Or via CLI flag:
 ```bash
-npx cpw download --url https://internal.corp.com/bins/chrome-linux.zip
+npx cpw install --url https://internal.corp.com/bins/chrome-linux.zip
 ```
 
 Priority: `CDPWRIGHT_DOWNLOAD_URL` > `CDPWRIGHT_DOWNLOAD_MIRROR` > default Google CDN. CLI flags take precedence over env vars.

@@ -68,8 +68,8 @@ Commands:
   pdf <url> -o file.pdf    Generate visual PDF of page
   html <url> -o file.html  Save the page HTML source
   eval <url> <script>      Run JS in page, print result as JSON
-  download [options]       Download pinned Chromium snapshot
-  install                  Alias for download
+  install [options]        Download pinned Chromium snapshot
+  download                 Alias for install
   version                  Print cdpwright and Chromium versions
 
 Options:
@@ -77,9 +77,9 @@ Options:
   --headed                 Run in headed mode
   -o, --output <file>      Output file path (for screenshot, html, pdf)
   --full-page              Capture full scrollable page (for screenshot)
-  --latest                 Download the latest Chromium revision (for download)
-  --mirror <url>           Custom mirror base URL (for download)
-  --url <url>              Exact zip URL override (for download)
+  --latest                 Download the latest Chromium revision (for install)
+  --mirror <url>           Custom mirror base URL (for install)
+  --url <url>              Exact zip URL override (for install)
 
 Interactive session:
   open <url>               Open browser and start a session

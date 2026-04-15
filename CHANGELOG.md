@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.2
+- Added a Playwright-style explicit Chromium install step and made CI run it before tests.
+- Promoted `cpw install` in the docs and CLI help as the primary browser cache command.
+
 ## 1.3.1
 - Added auto-waiting for element reads and interactions, including locator reads and hidden assertions.
 - Documented the auto-wait API surface across Page, Frame, Locator, and Assertions.

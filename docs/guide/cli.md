@@ -19,7 +19,13 @@ cpw <command>
 
 ## Commands
 
-Each command launches its own browser, does its job, and exits. No setup needed.
+Each command launches its own browser, does its job, and exits.
+
+If you want to prewarm the browser cache first, run:
+
+```bash
+npx cpw install
+```
 
 ### `cpw screenshot <url> -o <file>`
 
@@ -56,18 +62,18 @@ npx cpw eval https://example.com "document.title"
 npx cpw eval https://example.com "document.querySelectorAll('a').length"
 ```
 
-### `cpw download`
+### `cpw install`
 
-Download a pinned Chromium snapshot to the local cache.
+Download a pinned Chromium snapshot to the local cache, Playwright-style.
 
 ```bash
-npx cpw download              # pinned revision
-npx cpw download --latest     # latest available revision
-npx cpw download --mirror <url>   # use a custom mirror base URL
-npx cpw download --url <url>      # use an exact zip URL
+npx cpw install                # pinned revision
+npx cpw install --latest       # latest available revision
+npx cpw install --mirror <url> # use a custom mirror base URL
+npx cpw install --url <url>    # use an exact zip URL
 ```
 
-`install` is an alias for `download`.
+`download` is an alias for `install`.
 
 ### `cpw version`
 
@@ -85,9 +91,9 @@ npx cpw version
 | `--headed` | Run in headed mode |
 | `-o`, `--output <file>` | Output file path (for `screenshot`, `html`, and `pdf`) |
 | `--full-page` | Capture full scrollable page (for `screenshot`) |
-| `--latest` | Download the latest Chromium revision (for `download`) |
-| `--mirror <url>` | Custom mirror base URL (for `download`) |
-| `--url <url>` | Exact zip URL override (for `download`) |
+| `--latest` | Download the latest Chromium revision (for `install`) |
+| `--mirror <url>` | Custom mirror base URL (for `install`) |
+| `--url <url>` | Exact zip URL override (for `install`) |
 
 ## Interactive session
 

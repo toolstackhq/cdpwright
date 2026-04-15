@@ -6,12 +6,14 @@
 npm install @toolstackhq/cdpwright
 ```
 
-## Download Chromium
+## Install Chromium once
 
 ```bash
-npx cpw download
-npx cpw download --latest
+npx cpw install
+npx cpw install --latest
 ```
+
+If you are working from a source checkout, run `npm run build` first and then `npm run browser:install`.
 
 ## Launch and navigate
 

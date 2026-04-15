@@ -8,7 +8,7 @@ Chromium-only automation built on the Chrome DevTools Protocol (CDP). A lightwei
 mkdir my-project && cd my-project
 npm init -y
 npm install @toolstackhq/cdpwright
-npx cpw download    # downloads a pinned Chromium build
+npx cpw install     # downloads a pinned Chromium build once
 ```
 
 Create `quick.mjs` (the `.mjs` extension enables ES modules — no config needed):
@@ -39,7 +39,7 @@ node quick.mjs
 - Small surface: pages/frames/locators, plus built-in expect matchers.
 - Selector routing: CSS by default; XPath if the selector starts with `/`, `./`, `.//`, `..`, or `(/`. Shadow DOM via `>>>` (e.g., `host >>> button`).
 - Contexts: `browser.newContext()` gives incognito-style isolation without launching a new browser.
-- Downloads: `npx cpw download` (or `--latest`) fetches Chromium into a local cache.
+- Browser install: `npx cpw install` (or `--latest`) fetches Chromium into a local cache once, Playwright-style.
 
 ## Key APIs
 - `chromium.launch(options)` → `Browser`
@@ -71,7 +71,7 @@ graph TD
     end
 
     subgraph Download
-        CPW -->|cpw download| DL[Downloader]
+        CPW -->|cpw install| DL[Downloader]
         DL -->|fetch + extract| CACHE["~/.cache/cdpwright"]
         MGR -.->|resolve executable| CACHE
     end

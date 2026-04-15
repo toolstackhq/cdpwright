@@ -20,6 +20,8 @@ jobs:
         run: npm install
       - name: Build
         run: npm run build
+      - name: Install Chromium
+        run: npm run browser:install
       - name: Unit tests
         run: npm run test
       - name: Integration tests
