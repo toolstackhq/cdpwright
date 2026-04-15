@@ -3,48 +3,52 @@ export type MarkdownComputedStyle = {
   visibility: string;
 };
 
-type MarkdownNodeLike = {
-  nodeType: number;
+export type MarkdownTreeNode = {
+  nodeType: 1 | 3;
   nodeValue?: string | null;
-  childNodes: ArrayLike<MarkdownNodeLike>;
-};
-
-type MarkdownElementLike = MarkdownNodeLike & {
-  tagName: string;
-  textContent?: string | null;
+  tagName?: string;
+  attrs?: Record<string, string>;
   className?: string;
-  hasAttribute(name: string): boolean;
-  getAttribute(name: string): string | null;
+  style?: MarkdownComputedStyle;
+  childNodes: MarkdownTreeNode[];
 };
 
 const NODE_TEXT = 3;
 const NODE_ELEMENT = 1;
 
-export function serializeMarkdownFromElement(
-  root: MarkdownElementLike,
-  getComputedStyle: (el: MarkdownElementLike) => MarkdownComputedStyle
-): string {
-  function isElement(node: MarkdownNodeLike): node is MarkdownElementLike {
+export function serializeMarkdownFromTree(root: MarkdownTreeNode): string {
+  function isElement(node: MarkdownTreeNode): node is MarkdownTreeNode & { nodeType: 1; tagName: string } {
     return node.nodeType === NODE_ELEMENT;
   }
 
-  function isText(node: MarkdownNodeLike): boolean {
+  function isText(node: MarkdownTreeNode): node is MarkdownTreeNode & { nodeType: 3; nodeValue?: string | null } {
     return node.nodeType === NODE_TEXT;
   }
 
-  function isIgnored(el: MarkdownElementLike): boolean {
+  function isIgnored(el: MarkdownTreeNode & { nodeType: 1; tagName: string }): boolean {
     const tag = el.tagName.toLowerCase();
     return tag === "script" || tag === "style" || tag === "noscript" || tag === "template";
   }
 
-  function isHidden(el: MarkdownElementLike): boolean {
-    if (el.hasAttribute("hidden") || el.getAttribute("aria-hidden") === "true") return true;
-    const style = getComputedStyle(el);
-    return style.display === "none" || style.visibility === "hidden";
+  function isHidden(el: MarkdownTreeNode & { nodeType: 1; tagName: string }): boolean {
+    const attrs = el.attrs ?? {};
+    if (Object.prototype.hasOwnProperty.call(attrs, "hidden") || attrs["aria-hidden"] === "true") return true;
+    const style = el.style;
+    return style ? style.display === "none" || style.visibility === "hidden" : false;
   }
 
   function collapseWhitespace(value: string): string {
     return value.replace(/\u00a0/g, " ").replace(/\s+/g, " ");
+  }
+
+  function collectText(node: MarkdownTreeNode): string {
+    if (isText(node)) {
+      return node.nodeValue ?? "";
+    }
+    if (!isElement(node)) {
+      return "";
+    }
+    return node.childNodes.map((child) => collectText(child)).join("");
   }
 
   function escapeInline(value: string): string {
@@ -61,32 +65,33 @@ export function serializeMarkdownFromElement(
       .join("\n");
   }
 
-  function inlineChildren(parent: MarkdownNodeLike): string {
+  function inlineChildren(parent: MarkdownTreeNode): string {
     let output = "";
-    for (const child of Array.from(parent.childNodes)) {
+    for (const child of parent.childNodes) {
       output += inlineNode(child);
     }
     return output;
   }
 
-  function inlineNode(node: MarkdownNodeLike): string {
+  function inlineNode(node: MarkdownTreeNode): string {
     if (isText(node)) {
       return escapeInline(collapseWhitespace(node.nodeValue ?? ""));
     }
     if (!isElement(node) || isIgnored(node) || isHidden(node)) return "";
 
     const tag = node.tagName.toLowerCase();
+    const attrs = node.attrs ?? {};
 
     if (tag === "br") return "\n";
     if (tag === "a") {
       const text = inlineChildren(node).trim();
-      const href = node.getAttribute("href")?.trim();
+      const href = attrs.href?.trim();
       if (!href) return text;
       return `[${text || href}](${href})`;
     }
     if (tag === "img") {
-      const alt = node.getAttribute("alt")?.trim() ?? "";
-      const src = node.getAttribute("src")?.trim();
+      const alt = attrs.alt?.trim() ?? "";
+      const src = attrs.src?.trim();
       return src ? `![${escapeInline(alt)}](${src})` : "";
     }
     if (tag === "strong" || tag === "b") {
@@ -98,7 +103,7 @@ export function serializeMarkdownFromElement(
       return text ? `*${text}*` : "";
     }
     if (tag === "code") {
-      const text = node.textContent ?? "";
+      const text = node.childNodes.map((child) => (isText(child) ? child.nodeValue ?? "" : "")).join("");
       const inline = text.replace(/\r/g, "").replace(/`/g, "\\`").trim();
       return inline ? `\`${inline}\`` : "";
     }
@@ -110,9 +115,9 @@ export function serializeMarkdownFromElement(
     return inlineChildren(node);
   }
 
-  function collectElementsByTag(node: MarkdownNodeLike, tagName: string): MarkdownElementLike[] {
-    const matches: MarkdownElementLike[] = [];
-    for (const child of Array.from(node.childNodes)) {
+  function collectElementsByTag(node: MarkdownTreeNode, tagName: string): (MarkdownTreeNode & { nodeType: 1; tagName: string })[] {
+    const matches: (MarkdownTreeNode & { nodeType: 1; tagName: string })[] = [];
+    for (const child of node.childNodes) {
       if (!isElement(child)) continue;
       if (child.tagName.toLowerCase() === tagName) {
         matches.push(child);
@@ -122,14 +127,14 @@ export function serializeMarkdownFromElement(
     return matches;
   }
 
-  function serializeTable(table: MarkdownElementLike): string {
+  function serializeTable(table: MarkdownTreeNode & { nodeType: 1; tagName: string }): string {
     const rows = collectElementsByTag(table, "tr");
     if (rows.length === 0) return "";
 
-    const hasHeader = rows.some((row) => Array.from(row.childNodes).some((cell) => isElement(cell) && cell.tagName.toLowerCase() === "th"));
+    const hasHeader = rows.some((row) => row.childNodes.some((cell) => isElement(cell) && cell.tagName.toLowerCase() === "th"));
     const rowValues = rows.map((row) =>
-      Array.from(row.childNodes)
-        .filter((cell) => isElement(cell) && (cell.tagName.toLowerCase() === "th" || cell.tagName.toLowerCase() === "td"))
+      row.childNodes
+        .filter((cell): cell is MarkdownTreeNode & { nodeType: 1; tagName: string } => isElement(cell) && (cell.tagName.toLowerCase() === "th" || cell.tagName.toLowerCase() === "td"))
         .map((cell) => inlineChildren(cell).trim().replace(/\|/g, "\\|"))
     );
 
@@ -147,8 +152,8 @@ export function serializeMarkdownFromElement(
     return `\n\n${lines.join("\n")}\n\n`;
   }
 
-  function serializeList(list: MarkdownElementLike, ordered: boolean, depth: number): string {
-    const items = Array.from(list.childNodes).filter((child): child is MarkdownElementLike => isElement(child) && child.tagName.toLowerCase() === "li");
+  function serializeList(list: MarkdownTreeNode & { nodeType: 1; tagName: string }, ordered: boolean, depth: number): string {
+    const items = list.childNodes.filter((child): child is MarkdownTreeNode & { nodeType: 1; tagName: string } => isElement(child) && child.tagName.toLowerCase() === "li");
     if (items.length === 0) return "";
 
     const lines: string[] = [];
@@ -159,7 +164,7 @@ export function serializeMarkdownFromElement(
       const parts: string[] = [];
       const nestedBlocks: string[] = [];
 
-      for (const child of Array.from(item.childNodes)) {
+      for (const child of item.childNodes) {
         if (isElement(child) && (child.tagName.toLowerCase() === "ul" || child.tagName.toLowerCase() === "ol")) {
           const nested = serializeList(child, child.tagName.toLowerCase() === "ol", depth + 1).trim();
           if (nested) nestedBlocks.push(indentLines(nested, depth + 1));
@@ -180,7 +185,7 @@ export function serializeMarkdownFromElement(
     return `\n\n${lines.join("\n")}\n\n`;
   }
 
-  function blockNode(node: MarkdownNodeLike, depth: number): string {
+  function blockNode(node: MarkdownTreeNode, depth: number): string {
     if (isText(node)) {
       return collapseWhitespace(node.nodeValue ?? "");
     }
@@ -206,9 +211,13 @@ export function serializeMarkdownFromElement(
         .join("\n")}\n\n`;
     }
     if (tag === "pre") {
-      const code = node.textContent?.replace(/\r/g, "").replace(/\n+$/, "") ?? "";
-      const codeChild = Array.from(node.childNodes).find((child): child is MarkdownElementLike => isElement(child) && child.tagName.toLowerCase() === "code");
-      const lang = codeChild?.className?.match(/language-([a-z0-9_-]+)/i)?.[1] ?? "";
+      const codeBlock = node.childNodes.find((child): child is MarkdownTreeNode & { nodeType: 1; tagName: string; className?: string } =>
+        isElement(child) && child.tagName.toLowerCase() === "code"
+      );
+      const code = (codeBlock ? collectText(codeBlock) : collectText(node))
+        .replace(/\r/g, "")
+        .replace(/\n+$/, "");
+      const lang = codeBlock?.className?.match(/language-([a-z0-9_-]+)/i)?.[1] ?? "";
       return `\n\n\`\`\`${lang}\n${code}\n\`\`\`\n\n`;
     }
     if (tag === "ul") return serializeList(node, false, depth);
@@ -230,9 +239,9 @@ export function serializeMarkdownFromElement(
     return inlineChildren(node);
   }
 
-  function blockChildren(parent: MarkdownNodeLike, depth: number): string {
+  function blockChildren(parent: MarkdownTreeNode, depth: number): string {
     let output = "";
-    for (const child of Array.from(parent.childNodes)) {
+    for (const child of parent.childNodes) {
       output += blockNode(child, depth);
     }
     return output;

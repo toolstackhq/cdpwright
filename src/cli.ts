@@ -6,7 +6,7 @@ import { ChromiumManager } from "./browser/ChromiumManager.js";
 import { automaton } from "./index.js";
 import { PINNED_REVISION, resolveRevision } from "./browser/Revision.js";
 import { normalizeTestRunner, scaffoldTestSuite } from "./scaffold/testSuite.js";
-import { serializeMarkdownFromElement } from "./html/markdown.js";
+import { serializeMarkdownFromTree, type MarkdownTreeNode } from "./html/markdown.js";
 import {
   detectPlatform,
   defaultCacheRoot,
@@ -164,7 +164,7 @@ async function connectToSession(): Promise<{ browser: Browser; page: Page }> {
 /** Launch standalone browser, navigate, run fn, close. */
 async function withPage<T>(
   url: string,
-  options: { headless?: boolean; maximize?: boolean },
+  options: { headless?: boolean; maximize?: boolean; allowFileUrl?: boolean },
   fn: (page: Page, browser: Browser) => Promise<T>
 ): Promise<T> {
   const browser = await automaton.launch({
@@ -175,7 +175,7 @@ async function withPage<T>(
   });
   try {
     const page = await browser.newPage();
-    await page.goto(url, { waitUntil: "load" });
+    await page.goto(url, { waitUntil: "load", allowFileUrl: options.allowFileUrl });
     return await fn(page, browser);
   } finally {
     await browser.close();
@@ -335,7 +335,7 @@ async function cmdHtml(rest: string[]) {
 
   if (url) {
     const headless = resolveHeadless(rest, true);
-    await withPage(url, { headless }, async (page) => {
+    await withPage(url, { headless, allowFileUrl: true }, async (page) => {
       await writeHtml(page);
     });
   } else {
@@ -356,14 +356,53 @@ async function cmdMarkdown(rest: string[]) {
   const output = flagValue(rest, "-o") || flagValue(rest, "--output");
 
   const writeMarkdown = async (page: Page) => {
-    const markdown = await page.evaluate<string>((serializerSource) => {
-      const serializeMarkdownFromElement = new Function(`return (${serializerSource})`)() as typeof import("./html/markdown.js").serializeMarkdownFromElement;
+    const tree = await page.evaluate<MarkdownTreeNode>(() => {
+      type SnapshotNode = {
+        nodeType: 1 | 3;
+        nodeValue?: string | null;
+        tagName?: string;
+        attrs?: Record<string, string>;
+        className?: string;
+        style?: { display: string; visibility: string };
+        childNodes: SnapshotNode[];
+      };
+
       const preferredRoot =
         document.querySelector("main, article, [role='main']") ??
         document.body ??
         document.documentElement;
-      return serializeMarkdownFromElement(preferredRoot as never, (el) => window.getComputedStyle(el as Element));
-    }, serializeMarkdownFromElement.toString());
+
+      const snapshot = (node: Node): SnapshotNode | null => {
+        if (node.nodeType === Node.TEXT_NODE) {
+          return { nodeType: 3, nodeValue: node.nodeValue ?? "", childNodes: [] };
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+          return null;
+        }
+
+        const el = node as Element;
+        return {
+          nodeType: 1,
+          tagName: el.tagName.toLowerCase(),
+          attrs: Object.fromEntries(Array.from(el.attributes, (attr) => [attr.name, attr.value] as const)),
+          className: typeof (el as HTMLElement).className === "string"
+            ? (el as HTMLElement).className
+            : el.getAttribute("class") || "",
+          style: (() => {
+            const computed = window.getComputedStyle(el);
+            return { display: computed.display, visibility: computed.visibility };
+          })(),
+          childNodes: Array.from(el.childNodes).map(snapshot).filter((child): child is SnapshotNode => child != null),
+        };
+      };
+
+      const result = snapshot(preferredRoot);
+      if (!result) {
+        throw new Error("Failed to snapshot page");
+      }
+      return result;
+    });
+    const markdown = serializeMarkdownFromTree(tree);
     if (output) {
       fs.writeFileSync(path.resolve(output), markdown, "utf-8");
     } else {
@@ -376,7 +415,7 @@ async function cmdMarkdown(rest: string[]) {
 
   if (url) {
     const headless = resolveHeadless(rest, true);
-    await withPage(url, { headless }, async (page) => {
+    await withPage(url, { headless, allowFileUrl: true }, async (page) => {
       await writeMarkdown(page);
     });
   } else {

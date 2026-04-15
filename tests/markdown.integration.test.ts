@@ -1,58 +1,28 @@
 import { describe, expect, it } from "vitest";
-import { serializeMarkdownFromElement, type MarkdownComputedStyle } from "../src/html/markdown.js";
+import { serializeMarkdownFromTree, type MarkdownComputedStyle, type MarkdownTreeNode } from "../src/html/markdown.js";
 
 const runIntegration = process.env.RUN_INTEGRATION === "1";
 const testFn = runIntegration ? it : it.skip;
 
-type NodeType = 1 | 3;
-
-type FakeNode = {
-  nodeType: NodeType;
-  nodeValue?: string | null;
-  childNodes: FakeNode[];
-};
-
-type FakeElement = FakeNode & {
-  tagName: string;
-  textContent?: string | null;
-  className?: string;
-  attrs?: Record<string, string>;
-  hasAttribute(name: string): boolean;
-  getAttribute(name: string): string | null;
-};
-
-function text(value: string): FakeNode {
+function text(value: string): MarkdownTreeNode {
   return { nodeType: 3, nodeValue: value, childNodes: [] };
 }
 
-function nodeText(node: FakeNode): string {
-  if (node.nodeType === 3) {
-    return node.nodeValue ?? "";
-  }
-  return node.childNodes.map(nodeText).join("");
-}
-
-function el(tagName: string, children: FakeNode[] = [], attrs: Record<string, string> = {}, className = ""): FakeElement {
+function el(
+  tagName: string,
+  children: MarkdownTreeNode[] = [],
+  attrs: Record<string, string> = {},
+  className = "",
+  style: MarkdownComputedStyle = { display: "block", visibility: "visible" }
+): MarkdownTreeNode {
   return {
     nodeType: 1,
     tagName,
     childNodes: children,
     attrs,
     className,
-    hasAttribute(name: string) {
-      return Object.prototype.hasOwnProperty.call(attrs, name);
-    },
-    getAttribute(name: string) {
-      return attrs[name] ?? null;
-    },
-    get textContent() {
-      return children.map(nodeText).join("");
-    },
+    style,
   };
-}
-
-function visibleStyle(): MarkdownComputedStyle {
-  return { display: "block", visibility: "visible" };
 }
 
 describe("markdown export", () => {
@@ -89,7 +59,7 @@ describe("markdown export", () => {
       ]),
     ]);
 
-    const markdown = serializeMarkdownFromElement(root, visibleStyle);
+    const markdown = serializeMarkdownFromTree(root);
 
     expect(markdown).toContain("# History of AI");
     expect(markdown).toContain("[examples](https://example.com)");

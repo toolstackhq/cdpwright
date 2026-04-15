@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.2
+- Fixed `cpw markdown` to snapshot the page DOM into a JSON-safe tree before serializing to Markdown.
+- Allowed the export commands to read local `file://` pages for offline fixtures and local docs workflows.
+- Kept the Markdown serializer pure and testable with a browser-free integration test.
+
 ## 1.4.1
 - Fixed the Vitest scaffold to use `cdpExpect(page).element(...)` from `@toolstackhq/cdpwright`.
 - Aligned all generated scaffold templates with the Linux Chromium launch flags used by CI.
