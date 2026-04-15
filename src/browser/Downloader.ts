@@ -91,38 +91,85 @@ export async function ensureDownloaded(options: DownloadOptions) {
   const platformDir = path.join(cacheRoot, platform);
   const revisionDir = path.join(platformDir, revision);
   ensureWithinRoot(cacheRoot, revisionDir);
+  fs.mkdirSync(platformDir, { recursive: true });
 
-  const executablePath = path.join(revisionDir, chromiumExecutableRelativePath(platform));
-  const markerFile = path.join(revisionDir, "INSTALLATION_COMPLETE");
+  const lockPath = path.join(platformDir, `${revision}.lock`);
+  return withFileLock(lockPath, async () => {
+    const executablePath = path.join(revisionDir, chromiumExecutableRelativePath(platform));
+    const markerFile = path.join(revisionDir, "INSTALLATION_COMPLETE");
 
-  if (fs.existsSync(executablePath) && fs.existsSync(markerFile)) {
+    if (fs.existsSync(executablePath) && fs.existsSync(markerFile)) {
+      return { executablePath, revisionDir };
+    }
+
+    fs.mkdirSync(revisionDir, { recursive: true });
+
+    const folder = platformFolder(platform);
+    const zipName = platform === "win" ? "chrome-win.zip" : platform === "mac" ? "chrome-mac.zip" : "chrome-linux.zip";
+
+    const explicitUrl = process.env.CDPWRIGHT_DOWNLOAD_URL?.trim();
+    const base = resolveSnapshotBase();
+    const downloadUrl = explicitUrl || `${base}/${folder}/${revision}/${zipName}`;
+
+    const tempZipPath = path.join(os.tmpdir(), `cdpwright-${platform}-${revision}.zip`);
+
+    logger.info("Downloading Chromium snapshot", downloadUrl);
+    try {
+      await downloadFile(downloadUrl, tempZipPath, logger);
+      logger.info("Extracting Chromium snapshot", tempZipPath);
+      await extractZipSafe(tempZipPath, revisionDir);
+      fs.writeFileSync(markerFile, new Date().toISOString());
+    } finally {
+      try {
+        fs.rmSync(tempZipPath, { force: true });
+      } catch {
+        // ignore temp file cleanup errors
+      }
+    }
+
+    if (!fs.existsSync(executablePath)) {
+      throw new Error(`Executable not found after extraction: ${executablePath}`);
+    }
+    ensureExecutable(executablePath, platform);
+
     return { executablePath, revisionDir };
+  });
+}
+
+async function withFileLock<T>(lockPath: string, task: () => Promise<T>): Promise<T> {
+  const timeoutMs = 120_000;
+  const startedAt = Date.now();
+  let lockHandle: fs.promises.FileHandle | null = null;
+
+  while (!lockHandle) {
+    try {
+      lockHandle = await fs.promises.open(lockPath, "wx");
+    } catch (err) {
+      const error = err as NodeJS.ErrnoException;
+      if (error.code !== "EEXIST") {
+        throw err;
+      }
+      if (Date.now() - startedAt > timeoutMs) {
+        throw new Error(`Timed out waiting for Chromium download lock: ${lockPath}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
   }
 
-  fs.mkdirSync(revisionDir, { recursive: true });
-
-  const folder = platformFolder(platform);
-  const zipName = platform === "win" ? "chrome-win.zip" : platform === "mac" ? "chrome-mac.zip" : "chrome-linux.zip";
-
-  const explicitUrl = process.env.CDPWRIGHT_DOWNLOAD_URL?.trim();
-  const base = resolveSnapshotBase();
-  const downloadUrl = explicitUrl || `${base}/${folder}/${revision}/${zipName}`;
-
-  const tempZipPath = path.join(os.tmpdir(), `cdpwright-${platform}-${revision}.zip`);
-
-  logger.info("Downloading Chromium snapshot", downloadUrl);
-  await downloadFile(downloadUrl, tempZipPath, logger);
-  logger.info("Extracting Chromium snapshot", tempZipPath);
-  await extractZipSafe(tempZipPath, revisionDir);
-  fs.writeFileSync(markerFile, new Date().toISOString());
-  fs.unlinkSync(tempZipPath);
-
-  if (!fs.existsSync(executablePath)) {
-    throw new Error(`Executable not found after extraction: ${executablePath}`);
+  try {
+    return await task();
+  } finally {
+    try {
+      await lockHandle.close();
+    } catch {
+      // ignore close errors
+    }
+    try {
+      await fs.promises.unlink(lockPath);
+    } catch {
+      // ignore cleanup errors
+    }
   }
-  ensureExecutable(executablePath, platform);
-
-  return { executablePath, revisionDir };
 }
 
 function downloadFile(url: string, dest: string, logger: Logger): Promise<void> {
