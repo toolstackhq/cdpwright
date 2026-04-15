@@ -6,7 +6,7 @@ import { ChromiumManager } from "./browser/ChromiumManager.js";
 import { automaton } from "./index.js";
 import { PINNED_REVISION, resolveRevision } from "./browser/Revision.js";
 import { normalizeTestRunner, scaffoldTestSuite } from "./scaffold/testSuite.js";
-import { serializeDocumentToMarkdown } from "./html/markdown.js";
+import { serializeMarkdownFromElement } from "./html/markdown.js";
 import {
   detectPlatform,
   defaultCacheRoot,
@@ -356,7 +356,14 @@ async function cmdMarkdown(rest: string[]) {
   const output = flagValue(rest, "-o") || flagValue(rest, "--output");
 
   const writeMarkdown = async (page: Page) => {
-    const markdown = await page.evaluate<string>(serializeDocumentToMarkdown);
+    const markdown = await page.evaluate<string>((serializerSource) => {
+      const serializeMarkdownFromElement = new Function(`return (${serializerSource})`)() as typeof import("./html/markdown.js").serializeMarkdownFromElement;
+      const preferredRoot =
+        document.querySelector("main, article, [role='main']") ??
+        document.body ??
+        document.documentElement;
+      return serializeMarkdownFromElement(preferredRoot as never, (el) => window.getComputedStyle(el as Element));
+    }, serializeMarkdownFromElement.toString());
     if (output) {
       fs.writeFileSync(path.resolve(output), markdown, "utf-8");
     } else {

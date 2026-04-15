@@ -249,12 +249,3 @@ export function serializeMarkdownFromElement(
   const markdown = normalize(blockChildren(root, 0));
   return markdown ? `${markdown}\n` : "";
 }
-
-export function serializeDocumentToMarkdown(): string {
-  const preferredRoot =
-    document.querySelector("main, article, [role='main']") ??
-    document.body ??
-    document.documentElement;
-
-  return serializeMarkdownFromElement(preferredRoot as unknown as MarkdownElementLike, (el) => window.getComputedStyle(el as unknown as Element));
-}
