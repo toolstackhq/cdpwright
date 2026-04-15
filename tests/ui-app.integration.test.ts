@@ -98,9 +98,11 @@ describe("ui app integration", () => {
     await promoOptin.setChecked(false);
     await automatonExpect(page).element("#promo-optin").toBeUnchecked();
 
-    const uploadPath = path.join(artifactsDir, "receipt.txt");
-    fs.writeFileSync(uploadPath, "receipt data", "utf-8");
-    await receiptFile.setInputFiles(uploadPath);
+    await receiptFile.setInputFiles({
+      name: "receipt.txt",
+      contents: "receipt data",
+      mimeType: "text/plain"
+    });
     await automatonExpect(page).element("#receipt-status").toHaveText("Receipt: receipt.txt");
 
     await page.click("#shadow-host >>> #shadow-button");
